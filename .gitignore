@@ -1,0 +1,36 @@
+# Python & Environment
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Models & Weights (Příliš velké pro Git)
+backend/weights/*.pth
+backend/weights/*.pt
+backend/weights/*.onnx
+!backend/weights/.gitkeep
+
+# Data & Storage
+backend/static/models/*.glb
+backend/static/models/*.gltf
+backend/static/models/*.bin
+backend/static/models/*.obj
+!backend/static/models/.gitkeep
+!backend/static/models/demo_*.glb
+*.db
+*.sqlite
+*.sqlite3
+storage/
+
+# Node & Frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
