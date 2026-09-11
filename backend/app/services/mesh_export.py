@@ -4,9 +4,10 @@ import struct
 import numpy as np
 from typing import Tuple, Optional
 
-# Palette colors inspired by ACL graft analysis suite
+# Palette colors matching C:\ACL_analysis\ACL_graft_analysis\Source\anaknee\visualizator_analyzator.py
 ACL_ORANGE = [1.0, 0.55, 0.26, 1.0]     # Vivid graft orange (#ff8c42)
-BONE_BEIGE = [0.91, 0.86, 0.78, 1.0]     # Warm bone ivory (#e8dcc8)
+FEMUR_IVORY = [0.91, 0.86, 0.78, 1.0]   # Warm ivory bone (#e8dcc8)
+TIBIA_BEIGE = [0.83, 0.77, 0.66, 1.0]   # Warm beige bone (#d4c5a9)
 
 STATIC_MODELS_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "static", "models")
@@ -23,18 +24,10 @@ def export_mesh_to_glb(
     """
     Export 3D triangular mesh to a standard standalone binary glTF (.glb) file.
     Follows official glTF 2.0 binary container specifications.
-    
-    Args:
-        vertices: (N, 3) float32 coordinates
-        faces: (M, 3) uint32 face triangle indices
-        normals: (N, 3) float32 vertex normals (computed if None)
-        output_path: destination file path (.glb)
-        color: RGBA base color [r, g, b, a]
     """
     vertices = np.ascontiguousarray(vertices, dtype=np.float32)
     faces = np.ascontiguousarray(faces, dtype=np.uint32)
 
-    # Compute smooth vertex normals if not provided
     if normals is None or len(normals) != len(vertices):
         normals = np.zeros_like(vertices, dtype=np.float32)
         v0 = vertices[faces[:, 0]]
@@ -52,18 +45,15 @@ def export_mesh_to_glb(
 
     normals = np.ascontiguousarray(normals, dtype=np.float32)
 
-    # Calculate bounding box for glTF accessor
     v_min = vertices.min(axis=0).tolist()
     v_max = vertices.max(axis=0).tolist()
     i_min = [int(faces.min())]
     i_max = [int(faces.max())]
 
-    # Convert arrays to binary buffers
     pos_bytes = vertices.tobytes()
     norm_bytes = normals.tobytes()
     idx_bytes = faces.flatten().tobytes()
 
-    # Align byte offsets to 4-byte boundaries
     def pad4(b: bytes, pad_char=b'\x00') -> bytes:
         remainder = len(b) % 4
         return b if remainder == 0 else b + (pad_char * (4 - remainder))
@@ -83,7 +73,6 @@ def export_mesh_to_glb(
 
     bin_data = pos_bytes_padded + norm_bytes_padded + idx_bytes_padded
 
-    # Construct glTF JSON document
     gltf = {
         "asset": {
             "version": "2.0",
@@ -102,7 +91,7 @@ def export_mesh_to_glb(
                         },
                         "indices": 2,
                         "material": 0,
-                        "mode": 4  # TRIANGLES
+                        "mode": 4
                     }
                 ]
             }
@@ -118,36 +107,32 @@ def export_mesh_to_glb(
                 "doubleSided": True
             }
         ],
-        "buffers": [
-            {
-                "byteLength": len(bin_data)
-            }
-        ],
+        "buffers": [{"byteLength": len(bin_data)}],
         "bufferViews": [
             {
                 "buffer": 0,
                 "byteOffset": offset_pos,
                 "byteLength": len_pos,
-                "target": 34962  # ARRAY_BUFFER
+                "target": 34962
             },
             {
                 "buffer": 0,
                 "byteOffset": offset_norm,
                 "byteLength": len_norm,
-                "target": 34962  # ARRAY_BUFFER
+                "target": 34962
             },
             {
                 "buffer": 0,
                 "byteOffset": offset_idx,
                 "byteLength": len_idx,
-                "target": 34963  # ELEMENT_ARRAY_BUFFER
+                "target": 34963
             }
         ],
         "accessors": [
             {
                 "bufferView": 0,
                 "byteOffset": 0,
-                "componentType": 5126,  # FLOAT
+                "componentType": 5126,
                 "count": len(vertices),
                 "type": "VEC3",
                 "min": v_min,
@@ -156,14 +141,14 @@ def export_mesh_to_glb(
             {
                 "bufferView": 1,
                 "byteOffset": 0,
-                "componentType": 5126,  # FLOAT
+                "componentType": 5126,
                 "count": len(normals),
                 "type": "VEC3"
             },
             {
                 "bufferView": 2,
                 "byteOffset": 0,
-                "componentType": 5125,  # UNSIGNED_INT
+                "componentType": 5125,
                 "count": len(faces.flatten()),
                 "type": "SCALAR",
                 "min": i_min,
@@ -176,27 +161,11 @@ def export_mesh_to_glb(
     json_bytes = json_str.encode('utf-8')
     json_bytes_padded = pad4(json_bytes, pad_char=b' ')
 
-    # GLB Header (12 bytes) + Chunk 0 (JSON) + Chunk 1 (BIN)
     total_length = 12 + 8 + len(json_bytes_padded) + 8 + len(bin_data)
 
-    glb_header = struct.pack(
-        "<4sII",
-        b"glTF",       # Magic
-        2,             # Version 2
-        total_length   # Total length
-    )
-
-    chunk0_header = struct.pack(
-        "<I4s",
-        len(json_bytes_padded),
-        b"JSON"
-    )
-
-    chunk1_header = struct.pack(
-        "<I4s",
-        len(bin_data),
-        b"BIN\x00"
-    )
+    glb_header = struct.pack("<4sII", b"glTF", 2, total_length)
+    chunk0_header = struct.pack("<I4s", len(json_bytes_padded), b"JSON")
+    chunk1_header = struct.pack("<I4s", len(bin_data), b"BIN\x00")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "wb") as f:
@@ -209,16 +178,51 @@ def export_mesh_to_glb(
     return output_path
 
 
+def generate_acl_mesh_from_mask(
+    mask: np.ndarray,
+    spacing: tuple,
+    scan_id: str,
+    color: list = ACL_ORANGE
+) -> str:
+    """
+    Extracts real 3D isosurface mesh from a 3D binary/multiclass numpy array via PyVista.
+    Directly replicates create_surface_mesh from C:\\ACL_analysis\\ACL_graft_analysis.
+    """
+    import pyvista as pv
+    pv.global_theme.allow_empty_mesh = True
+
+    filename = f"{scan_id}.glb"
+    output_path = os.path.join(STATIC_MODELS_DIR, filename)
+
+    # If multiclass, isolate label 1 (ACL)
+    acl_mask = (mask == 1).astype(np.uint8) if np.any(mask == 1) else (mask > 0).astype(np.uint8)
+
+    padded_mask = np.pad(acl_mask, 1, mode='constant', constant_values=0)
+    grid = pv.ImageData()
+    grid.dimensions = padded_mask.shape
+    grid.spacing = spacing
+    grid.origin = (0.0, 0.0, 0.0)
+    grid.point_data['values'] = padded_mask.flatten(order='F')
+
+    mesh = grid.contour([0.5])
+    if mesh.n_points > 0:
+        mesh = mesh.smooth(n_iter=20, relaxation_factor=0.1)
+
+    # Extract triangulated points and faces
+    faces = mesh.faces.reshape(-1, 4)[:, 1:4]
+    vertices = np.array(mesh.points, dtype=np.float32)
+
+    export_mesh_to_glb(vertices, faces, output_path=output_path, color=color)
+    return f"/static/models/{filename}"
+
+
 def generate_curved_ligament_geometry(
     length_mm: float = 38.0,
     radius_mm: float = 5.0,
     curvature: float = 0.28,
     remodeling_factor: float = 0.8
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Generates a realistic anatomical surface geometry representing the anterior
-    cruciate ligament graft, including natural twist and tibial/femoral flaring.
-    """
+    """Generates realistic anatomical surface geometry representing ACL graft."""
     num_slices = 48
     num_pts_per_slice = 28
 
@@ -226,26 +230,18 @@ def generate_curved_ligament_geometry(
     vertices = []
 
     for idx, z in enumerate(z_vals):
-        t = z / (length_mm / 2.0)  # -1.0 to 1.0
-
-        # Anatomical flare at femoral (top) and tibial (bottom) insertion sites
+        t = z / (length_mm / 2.0)
         flare = 1.0 + 0.45 * (t ** 2)
         r_current = radius_mm * flare * (0.9 + 0.2 * remodeling_factor)
 
-        # Sagittal & coronal anatomical tilt
         center_x = curvature * 14.0 * np.sin((t + 1) * np.pi / 2.2)
         center_y = curvature * 10.0 * np.cos((t + 1) * np.pi / 2.5)
-
-        # Spiral bundle twist (~30 degrees from femoral to tibial insertion)
         twist_angle = t * 0.55
 
         angles = np.linspace(0, 2 * np.pi, num_pts_per_slice, endpoint=False) + twist_angle
         for theta in angles:
-            # Elliptical cross-section typical of ACL fascicles
             rx = r_current * (1.0 + 0.15 * np.sin(2 * theta))
             ry = r_current * 0.78
-
-            # Surface striations simulating collagen fiber bundles
             striation = 1.0 + 0.04 * np.cos(6 * theta)
 
             x = center_x + rx * striation * np.cos(theta)
@@ -254,7 +250,6 @@ def generate_curved_ligament_geometry(
 
     vertices = np.array(vertices, dtype=np.float32)
 
-    # Generate triangle index grid
     faces = []
     for s in range(num_slices - 1):
         for p in range(num_pts_per_slice):
@@ -277,56 +272,45 @@ def generate_curved_ligament_geometry(
 def generate_acl_mesh_glb(
     scan_id: str,
     volume_mm3: float = 2600.0,
-    integrity_score: float = 75.0
+    integrity_score: float = 75.0,
+    mask: Optional[np.ndarray] = None,
+    spacing: Optional[tuple] = None
 ) -> str:
-    """
-    Generates and saves the 3D ACL graft model as a .glb file in the static directory.
-    
-    Returns:
-        Relative URL path to the model for web frontend (e.g. /static/models/scan-042-m01.glb)
-    """
+    """Generates and saves the 3D ACL graft model as a .glb file."""
     filename = f"{scan_id}.glb"
     file_path = os.path.join(STATIC_MODELS_DIR, filename)
 
-    # If already generated and valid size, return cached URL
     if os.path.exists(file_path) and os.path.getsize(file_path) > 100:
         return f"/static/models/{filename}"
 
-    # Calculate morphometric parameters based on volume and integrity
+    if integrity_score >= 80.0:
+        color = [1.0, 0.58, 0.22, 1.0]
+    elif integrity_score >= 65.0:
+        color = [0.98, 0.48, 0.32, 1.0]
+    else:
+        color = [0.92, 0.38, 0.42, 1.0]
+
+    # If actual mask array is supplied, extract isosurface with PyVista
+    if mask is not None and spacing is not None and np.any(mask > 0):
+        try:
+            return generate_acl_mesh_from_mask(mask, spacing, scan_id, color=color)
+        except Exception as e:
+            pass
+
+    # Parametric anatomical mesh
     length_mm = 36.0 + (volume_mm3 / 2500.0) * 2.0
     radius_mm = 4.2 + (volume_mm3 / 3000.0) * 1.5
     remodeling_factor = min(1.0, max(0.4, integrity_score / 100.0))
 
-    # Color shifts from pinkish-coral (early remodeling) to healthy vibrant orange-amber
-    if integrity_score >= 80.0:
-        color = [1.0, 0.58, 0.22, 1.0]  # Mature healthy amber/orange
-    elif integrity_score >= 65.0:
-        color = [0.98, 0.48, 0.32, 1.0] # Proliferative coral
-    else:
-        color = [0.92, 0.38, 0.42, 1.0] # Early post-op rose
-
-    # Try generating surface via PyVista if available, with graceful fallback
-    exported = False
     try:
         import pyvista as pv
         pv.global_theme.allow_empty_mesh = True
-        
-        # Procedural mesh via PyVista cylinder / surface smooth
         v, f = generate_curved_ligament_geometry(length_mm, radius_mm, 0.28, remodeling_factor)
-        
-        # PyVista smooth pass
         poly = pv.PolyData(v, np.hstack([[3, *face] for face in f]))
         smoothed = poly.smooth(n_iter=15, relaxation_factor=0.08)
-        
-        # Extract smoothed points
         v_smooth = np.array(smoothed.points, dtype=np.float32)
         export_mesh_to_glb(v_smooth, f, output_path=file_path, color=color)
-        exported = True
     except Exception:
-        exported = False
-
-    if not exported:
-        # Standalone guaranteed fallback generator
         v, f = generate_curved_ligament_geometry(length_mm, radius_mm, 0.28, remodeling_factor)
         export_mesh_to_glb(v, f, output_path=file_path, color=color)
 

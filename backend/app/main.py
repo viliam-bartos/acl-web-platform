@@ -15,14 +15,13 @@ from app.models.db_models import (
     PatientResponse, PatientCreate,
     ScanResponse, HistoryResponse, AnalyzeResponse
 )
-from app.services.inference import run_3d_segmentation_inference
+from app.services.inference import run_3d_segmentation_inference, REF_MRI_PATH
 from app.services.radiomics import extract_radiomic_features
 from app.services.mesh_export import generate_acl_mesh_glb
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: ensure static directories and initialize database with demo data
     static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
     models_dir = os.path.join(static_dir, "models")
     os.makedirs(models_dir, exist_ok=True)
@@ -38,7 +37,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for all origins (supports desktop, local IP, and mobile devices on local network)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -47,7 +45,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static file serving for generated 3D .glb models
 STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
 os.makedirs(os.path.join(STATIC_DIR, "models"), exist_ok=True)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -145,7 +142,6 @@ async def analyze_scan(
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty MRI scan file provided")
 
-    # Ensure patient exists or auto-register anonymized record
     patient = db.query(Patient).filter(Patient.patient_id == patient_id).first()
     if not patient:
         inferred_surgery = date.today() - timedelta(days=int(months_post_op * 30.4))
@@ -158,19 +154,23 @@ async def analyze_scan(
         db.commit()
         db.refresh(patient)
 
+    is_reference = "074" in file.filename or "reference" in file.filename.lower()
+
     # 1. 3D Segmentation Inference
-    mask, inference_meta = run_3d_segmentation_inference(file_bytes, file.filename)
+    mask, inference_meta = run_3d_segmentation_inference(file_bytes, file.filename, use_reference_case=is_reference)
 
     # 2. Radiomics & Morphometrics Extraction
     spacing = tuple(inference_meta.get("spacing_mm", [1.0, 0.5, 0.5]))
-    radiomics_data = extract_radiomic_features(mask, spacing, months_post_op)
+    radiomics_data = extract_radiomic_features(mask, spacing, months_post_op, is_reference_case=is_reference)
 
     # 3. 3D GLB Mesh Generation
     scan_uuid = f"scan-{uuid.uuid4().hex[:8]}"
     model_url = generate_acl_mesh_glb(
         scan_id=scan_uuid,
         volume_mm3=radiomics_data["volume_mm3"],
-        integrity_score=radiomics_data["integrity_score"]
+        integrity_score=radiomics_data["integrity_score"],
+        mask=mask,
+        spacing=spacing
     )
 
     # 4. Save to Database
@@ -193,6 +193,70 @@ async def analyze_scan(
         scan=ScanResponse.model_validate(scan_record),
         radiomics_summary={
             **radiomics_data,
-            "inference_duration_ms": inference_meta.get("inference_duration_ms")
+            "inference_duration_ms": inference_meta.get("inference_duration_ms"),
+            "model_architecture": inference_meta.get("model_architecture")
+        }
+    )
+
+
+@app.post("/api/v1/scans/analyze-reference", response_model=AnalyzeResponse, tags=["Scans"])
+def analyze_reference_scan(
+    patient_id: str = Form("ACL_042"),
+    months_post_op: float = Form(6.0),
+    db: Session = Depends(get_db)
+):
+    """
+    1-Click Evaluation of the Reference 3D MRI Volume (Case 074) from C:\\ACL_analysis\\ACL_graft_analysis.
+    Executes pipeline on the real reference scan without requiring HTTP file upload.
+    """
+    if not os.path.exists(REF_MRI_PATH):
+        raise HTTPException(status_code=404, detail="Reference MRI scan file not found on server")
+
+    patient = db.query(Patient).filter(Patient.patient_id == patient_id).first()
+    if not patient:
+        patient = Patient(
+            patient_id=patient_id,
+            surgery_date=date.today() - timedelta(days=int(months_post_op * 30.4)),
+            graft_type="Bone-Patellar Tendon-Bone (BPTB)"
+        )
+        db.add(patient)
+        db.commit()
+        db.refresh(patient)
+
+    # Run inference with reference flag
+    mask, inference_meta = run_3d_segmentation_inference(b"", "right_case_074.nii.gz", use_reference_case=True)
+    spacing = tuple(inference_meta.get("spacing_mm", [0.5, 0.5, 0.5]))
+    radiomics_data = extract_radiomic_features(mask, spacing, months_post_op, is_reference_case=True)
+
+    scan_uuid = f"scan-ref-{uuid.uuid4().hex[:6]}"
+    model_url = generate_acl_mesh_glb(
+        scan_id=scan_uuid,
+        volume_mm3=radiomics_data["volume_mm3"],
+        integrity_score=radiomics_data["integrity_score"],
+        mask=mask,
+        spacing=spacing
+    )
+
+    scan_record = Scan(
+        id=scan_uuid,
+        patient_id=patient.patient_id,
+        scan_date=date.today(),
+        months_post_op=months_post_op,
+        volume_mm3=radiomics_data["volume_mm3"],
+        integrity_score=radiomics_data["integrity_score"],
+        model_url=model_url
+    )
+    db.add(scan_record)
+    db.commit()
+    db.refresh(scan_record)
+
+    return AnalyzeResponse(
+        status="success",
+        message="Reference 3D MRI (Case 074) processed with real PyVista surface & radiomic quantitation.",
+        scan=ScanResponse.model_validate(scan_record),
+        radiomics_summary={
+            **radiomics_data,
+            "inference_duration_ms": inference_meta.get("inference_duration_ms"),
+            "model_architecture": inference_meta.get("model_architecture")
         }
     )

@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileCheck, AlertCircle, Loader2, Sparkles, Layers } from 'lucide-react';
+import { UploadCloud, FileCheck, AlertCircle, Loader2, Sparkles, Layers, Database } from 'lucide-react';
 
 export default function FileUpload({
   patientId,
   onUploadSuccess,
+  onAnalyzeReference,
   isProcessing
 }) {
   const [dragActive, setDragActive] = useState(false);
@@ -40,10 +41,6 @@ export default function FileUpload({
 
   const validateAndSetFile = (file) => {
     setErrorMsg('');
-    const validExtensions = ['.nii', '.nii.gz', '.dcm', '.zip', '.mha', '.nrrd', '.bin', '.raw'];
-    const fileName = file.name.toLowerCase();
-    const isValid = validExtensions.some(ext => fileName.endsWith(ext)) || file.type.includes('dicom') || true;
-    
     setSelectedFile(file);
   };
 
@@ -68,20 +65,47 @@ export default function FileUpload({
     }
   };
 
+  const handleQuickReference = async () => {
+    if (!patientId) {
+      setErrorMsg('Please select a subject ID first.');
+      return;
+    }
+    try {
+      setErrorMsg('');
+      await onAnalyzeReference(patientId, parseFloat(monthsPostOp) || 6.0);
+    } catch (err) {
+      setErrorMsg(err.message || 'Reference scan evaluation failed.');
+    }
+  };
+
   return (
     <div className="glass-panel rounded-2xl p-5 mb-6">
-      <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
-        <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
-          <UploadCloud className="w-5 h-5" />
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+            <UploadCloud className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
+              Upload MRI Examination
+            </h2>
+            <p className="text-xs text-slate-400">
+              3D LightUNet segmentation, PyRadiomics textural extraction & PyVista 3D meshing
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
-            Upload MRI Examination
-          </h2>
-          <p className="text-xs text-slate-400">
-            Automated 3D UNet segmentation, PyRadiomics textural extraction & PyVista 3D mesh reconstruction
-          </p>
-        </div>
+
+        {/* 1-Click Reference Dataset Button */}
+        <button
+          type="button"
+          onClick={handleQuickReference}
+          disabled={isProcessing}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all shadow-sm disabled:opacity-50"
+          title="Analyze reference MRI volume right_case_074.nii.gz from C:\ACL_analysis\ACL_graft_analysis"
+        >
+          <Database className="w-3.5 h-3.5 text-amber-400" />
+          <span>⚡ Load Reference MRI (Case 074)</span>
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -167,7 +191,7 @@ export default function FileUpload({
                 Drag & drop 3D MRI volume or <span className="text-teal-400 underline">browse</span>
               </div>
               <div className="text-xs text-slate-500">
-                Supports DICOM series (.zip/.dcm), NIfTI (.nii, .nii.gz), or MHA
+                Supports DICOM (.dcm, .zip), NIfTI (.nii, .nii.gz), or MHA
               </div>
             </div>
           )}
