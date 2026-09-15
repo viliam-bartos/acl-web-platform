@@ -1,9 +1,10 @@
+import logging
+import math
 import os
 import sys
-import math
-import logging
+from typing import Any
+
 import numpy as np
-from typing import Dict, Any
 
 EXTERNAL_ACL_DIR = r"C:\ACL_analysis\ACL_graft_analysis"
 REF_RESULTS_CSV = os.path.join(EXTERNAL_ACL_DIR, "Data", "reference", "Results", "patient_results.csv")
@@ -18,7 +19,7 @@ def extract_radiomic_features(
     spacing: tuple,
     months_post_op: float,
     is_reference_case: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Extracts radiomic, volumetric, and geometric metrics.
     Integrates with C:\\ACL_analysis\\ACL_graft_analysis anaknee geometry & radiomics modules.
@@ -32,7 +33,7 @@ def extract_radiomic_features(
 
     # 2. General volumetric & morphometric calculation
     voxel_volume_mm3 = float(spacing[0] * spacing[1] * spacing[2])
-    
+
     # Label 1 is ACL
     acl_voxels = int(np.sum(mask == 1)) if np.any(mask == 1) else int(np.sum(mask > 0))
     volume_mm3 = round(acl_voxels * voxel_volume_mm3, 1)
@@ -81,7 +82,7 @@ def extract_radiomic_features(
     }
 
 
-def _load_reference_case_results(months_post_op: float) -> Dict[str, Any]:
+def _load_reference_case_results(months_post_op: float) -> dict[str, Any]:
     """Load exact measured features from C:\\ACL_analysis\\ACL_graft_analysis Data/reference."""
     # Exact ground truth measurements for Case 074
     volume_mm3 = 2456.6

@@ -1,8 +1,9 @@
 import os
-from datetime import date, timedelta
-from typing import Generator
+from collections.abc import Generator
+from datetime import date
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 # SQLite database file path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

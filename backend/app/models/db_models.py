@@ -1,11 +1,10 @@
 from datetime import date
-from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, String, Float, Date, ForeignKey
+from sqlalchemy import Column, Date, Float, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
-
 
 # ====================================================================
 # SQLAlchemy Database Models
@@ -75,15 +74,15 @@ class PatientCreate(PatientBase):
 
 class PatientResponse(PatientBase):
     total_scans: int = 0
-    latest_integrity_score: Optional[float] = None
-    latest_volume_mm3: Optional[float] = None
+    latest_integrity_score: float | None = None
+    latest_volume_mm3: float | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class HistoryResponse(BaseModel):
     patient: PatientBase
-    scans: List[ScanResponse]
+    scans: list[ScanResponse]
 
     model_config = ConfigDict(from_attributes=True)
 

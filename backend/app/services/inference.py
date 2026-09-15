@@ -1,9 +1,10 @@
+import logging
 import os
 import sys
 import time
-import logging
+from typing import Any
+
 import numpy as np
-from typing import Dict, Any, Tuple, Optional
 
 # Path to existing ACL analysis repository
 EXTERNAL_ACL_DIR = r"C:\ACL_analysis\ACL_graft_analysis"
@@ -23,12 +24,12 @@ def run_3d_segmentation_inference(
     file_bytes: bytes,
     filename: str,
     use_reference_case: bool = False
-) -> Tuple[np.ndarray, Dict[str, Any], Optional[Dict[str, Any]]]:
+) -> tuple[np.ndarray, dict[str, Any], dict[str, Any] | None]:
     """
     3D Deep Learning Segmentation Inference & Geometric Analysis.
     Accelerated via NVIDIA CUDA GPU if available.
     Connects to LightUNet3D / anaknee from C:\\ACL_analysis\\ACL_graft_analysis.
-    
+
     Returns:
         voxel_mask (np.ndarray): 3D volume mask (0=BG, 1=ACL, 2=Femur, 3=Tibia)
         metadata (dict): Inferred resolution, spacing, inference duration, model & GPU info.

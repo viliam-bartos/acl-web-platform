@@ -1,8 +1,9 @@
-import os
 import json
+import os
 import struct
+from typing import Any
+
 import numpy as np
-from typing import Tuple, Optional, Dict, Any
 
 # Palette colors matching C:\ACL_analysis\ACL_graft_analysis\Source\anaknee\visualizator_analyzator.py
 PALETTE = {
@@ -23,11 +24,13 @@ STATIC_MODELS_DIR = os.path.abspath(
 def export_mesh_to_glb(
     vertices: np.ndarray,
     faces: np.ndarray,
-    normals: Optional[np.ndarray] = None,
+    normals: np.ndarray | None = None,
     output_path: str = "",
-    color: list = [1.0, 0.55, 0.26, 1.0]
+    color: list | None = None
 ) -> str:
     """Export 3D triangular mesh to a standard binary glTF (.glb) file."""
+    if color is None:
+        color = [1.0, 0.55, 0.26, 1.0]
     vertices = np.ascontiguousarray(vertices, dtype=np.float32)
     faces = np.ascontiguousarray(faces, dtype=np.uint32)
 
@@ -142,7 +145,7 @@ def generate_complete_knee_gltf(
     scan_id: str,
     mask_data: np.ndarray,
     spacing: tuple,
-    vis_data: Optional[Dict[str, Any]] = None
+    vis_data: dict[str, Any] | None = None
 ) -> str:
     """
     Builds and exports the complete 3D knee joint scene:
@@ -281,7 +284,7 @@ def generate_complete_knee_gltf(
 
     # 7. Set human-readable names and BLEND alphaMode on glTF materials, meshes, and nodes
     try:
-        with open(out_file, "r", encoding="utf-8") as f:
+        with open(out_file, encoding="utf-8") as f:
             d = json.load(f)
 
         part_names = ["Femur", "Tibia", "ACL", "Plateau", "BH_Grid", "BH_Ref", "Blumensaat"]
@@ -310,9 +313,11 @@ def generate_acl_mesh_from_mask(
     mask: np.ndarray,
     spacing: tuple,
     scan_id: str,
-    color: list = [1.0, 0.55, 0.26, 1.0]
+    color: list | None = None
 ) -> str:
     """Extracts real 3D isosurface mesh from binary/multiclass numpy array via PyVista."""
+    if color is None:
+        color = [1.0, 0.55, 0.26, 1.0]
     import pyvista as pv
     pv.global_theme.allow_empty_mesh = True
 
@@ -344,14 +349,14 @@ def generate_curved_ligament_geometry(
     radius_mm: float = 5.0,
     curvature: float = 0.28,
     remodeling_factor: float = 0.8
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     num_slices = 48
     num_pts_per_slice = 28
 
     z_vals = np.linspace(-length_mm / 2.0, length_mm / 2.0, num_slices)
     vertices = []
 
-    for idx, z in enumerate(z_vals):
+    for z in z_vals:
         t = z / (length_mm / 2.0)
         flare = 1.0 + 0.45 * (t ** 2)
         r_current = radius_mm * flare * (0.9 + 0.2 * remodeling_factor)
@@ -392,10 +397,10 @@ def generate_acl_mesh_glb(
     scan_id: str,
     volume_mm3: float = 2600.0,
     integrity_score: float = 75.0,
-    mask: Optional[np.ndarray] = None,
-    spacing: Optional[tuple] = None,
+    mask: np.ndarray | None = None,
+    spacing: tuple | None = None,
     full_knee: bool = True,
-    vis_data: Optional[Dict[str, Any]] = None
+    vis_data: dict[str, Any] | None = None
 ) -> str:
     """Generates 3D mesh model (isolated ACL or full knee assembly with Femur, Tibia, Plateau, B&H Grid)."""
     # If full knee requested with multiclass mask

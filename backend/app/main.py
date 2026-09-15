@@ -1,24 +1,27 @@
 import os
 import uuid
-from datetime import date, timedelta
-from typing import List
 from contextlib import asynccontextmanager
+from datetime import date, timedelta
 
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db, init_db, DB_PATH
+from app.core.database import DB_PATH, get_db, init_db
 from app.models.db_models import (
-    Patient, Scan,
-    PatientResponse, PatientCreate,
-    ScanResponse, HistoryResponse, AnalyzeResponse
+    AnalyzeResponse,
+    HistoryResponse,
+    Patient,
+    PatientCreate,
+    PatientResponse,
+    Scan,
+    ScanResponse,
 )
-from app.services.inference import run_3d_segmentation_inference, REF_MRI_PATH
-from app.services.radiomics import extract_radiomic_features
+from app.services.inference import REF_MRI_PATH, run_3d_segmentation_inference
 from app.services.mesh_export import generate_acl_mesh_glb
+from app.services.radiomics import extract_radiomic_features
 
 
 @asynccontextmanager
@@ -26,7 +29,7 @@ async def lifespan(app: FastAPI):
     static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
     models_dir = os.path.join(static_dir, "models")
     os.makedirs(models_dir, exist_ok=True)
-    
+
     init_db()
     yield
 
@@ -70,7 +73,7 @@ def health_check():
     return {"status": "healthy", "service": "acl-backend"}
 
 
-@app.get("/api/v1/patients", response_model=List[PatientResponse], tags=["Patients"])
+@app.get("/api/v1/patients", response_model=list[PatientResponse], tags=["Patients"])
 def list_patients(db: Session = Depends(get_db)):
     """List all pseudoanonymized patients with longitudinal scan summaries."""
     patients = db.query(Patient).all()
@@ -80,7 +83,7 @@ def list_patients(db: Session = Depends(get_db)):
         total_scans = len(scans)
         latest_score = scans[-1].integrity_score if scans else None
         latest_vol = scans[-1].volume_mm3 if scans else None
-        
+
         results.append(PatientResponse(
             patient_id=p.patient_id,
             surgery_date=p.surgery_date,
