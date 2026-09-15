@@ -45,15 +45,19 @@ a frontend ho zobrazuje s viditelnou značkou. Reálná data mají `is_demo = fa
 
 - `POST /api/v1/scans/analyze`: Form-data (`patient_id`, `months_post_op`, `file`,
   volitelně `laterality`, `compute_radiomics`). Nahraje sken workeru, počká na výsledek,
-  uloží metriky a 3D model a vrátí záznam o vyšetření.
+  uloží metriky a 3D model a vrátí záznam o vyšetření. Vrací `201`.
 - `POST /api/v1/scans/analyze-reference`: Form-data (`patient_id`, `months_post_op`,
   volitelně `use_inference`). Nechá worker zhodnotit jeho vestavěný referenční případ 074.
-  Slouží k předvedení celé cesty bez potřeby vlastních dat.
+  Slouží k předvedení celé cesty bez potřeby vlastních dat. Vrací `201`.
+- `POST /api/v1/scans/{scan_id}/refresh`: Dotáhne výsledek vyšetření, které doběhlo až po
+  časovém limitu požadavku. Vrací `status: "pending"`, dokud výpočet běží.
 - `GET /api/v1/scans/{scan_id}/model`: Vrátí GLB model daného vyšetření.
 - `GET /api/v1/patients`: Vrátí seznam všech anonymizovaných pacientů.
 - `POST /api/v1/patients`: Zaregistruje nové anonymizované ID pacienta.
 - `GET /api/v1/patients/{patient_id}/history`: Vrátí časovou řadu všech kontrol pacienta
-  pro vykreslení grafu vývoje vazu.
+  pro vykreslení grafu vývoje vazu. Pole `patient` má **stejný tvar** jako položka
+  v `/patients` (včetně `total_scans`, `latest_acl_volume_mm3`, `has_demo_scans`); užší
+  typ odpovědi by přebytečná pole tiše zahodil.
 - `GET /api/v1/health`: Stav aplikace **a dostupnost výpočetního workera**.
 - `GET /api/v1/database/{stats,records,download}`: Prohlížeč a export databáze.
 

@@ -406,7 +406,12 @@ async def analyze_scan(
     )
 
 
-@app.post("/api/v1/scans/analyze-reference", response_model=AnalyzeResponse, tags=["Scans"])
+@app.post(
+    "/api/v1/scans/analyze-reference",
+    response_model=AnalyzeResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Scans"],
+)
 def analyze_reference_scan(
     patient_id: str = Form(default="ACL_042"),
     months_post_op: float = Form(default=6.0),

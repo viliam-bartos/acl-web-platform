@@ -201,7 +201,9 @@ class ScanResponse(BaseModel):
 
 
 class HistoryResponse(BaseModel):
-    patient: PatientBase
+    # `PatientResponse`, ne `PatientBase`: s užším typem Pydantic přebytečná
+    # pole tiše zahodí a klient pak čte `undefined`, aniž by cokoli selhalo.
+    patient: PatientResponse
     scans: list[ScanResponse]
 
     model_config = ConfigDict(from_attributes=True)
