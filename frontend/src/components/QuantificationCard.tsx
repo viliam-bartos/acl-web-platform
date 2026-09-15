@@ -1,33 +1,24 @@
 import { AlertTriangle, Cpu, Loader2 } from 'lucide-react';
-import { METRIC_DEFINITIONS, MetricDefinition, ScanRecord, formatMetric } from '../types';
+import { METRIC_DEFINITIONS, MetricDefinition, MetricGroup, ScanRecord, formatMetric } from '../types';
 
 interface QuantificationCardProps {
   scan: ScanRecord;
 }
 
-const GROUP_ORDER: Array<MetricDefinition['group']> = [
-  'Geometrie štěpu',
-  'Orientace',
-  'Prostorové vztahy',
-];
+const GROUP_ORDER: MetricGroup[] = ['Graft geometry', 'Orientation', 'Spatial relations'];
 
 function MetricTile({ definition, value }: { definition: MetricDefinition; value: number | null }) {
   const measured = value !== null && value !== undefined && !Number.isNaN(value);
   return (
-    <div
-      className="p-3 rounded-lg bg-paper-50 border border-paper-400"
-      title={definition.meaning}
-    >
-      <span className="text-kraft-700 block text-[11px] font-mono uppercase tracking-wider truncate">
+    <div className="p-2.5 rounded-lg bg-paper-100 border border-paper-300" title={definition.meaning}>
+      <span className="block text-[10px] font-mono uppercase tracking-wider text-kraft-700 truncate">
         {definition.label}
       </span>
-      <span
-        className={`font-mono text-base font-bold ${
-          measured ? 'text-kraft-700' : 'text-kraft-600'
-        }`}
-      >
-        {formatMetric(value, definition)}{' '}
-        {measured && <span className="text-xs text-kraft-600 font-mono">{definition.unit}</span>}
+      <span className={`font-mono text-sm font-bold ${measured ? 'text-cyan-600' : 'text-kraft-600'}`}>
+        {formatMetric(value, definition)}
+        {measured && definition.unit !== '–' && (
+          <span className="text-[10px] text-kraft-700 font-normal"> {definition.unit}</span>
+        )}
       </span>
     </div>
   );
@@ -36,24 +27,22 @@ function MetricTile({ definition, value }: { definition: MetricDefinition; value
 export default function QuantificationCard({ scan }: QuantificationCardProps) {
   if (scan.status === 'pending') {
     return (
-      <div className="panel-paper rounded-xl p-5 h-full flex flex-col items-center justify-center text-center min-h-[200px]">
-        <Loader2 className="w-6 h-6 animate-spin text-kraft-600 mb-2" />
-        <p className="text-sm text-composite-900 font-semibold">Výpočet na workeru běží</p>
-        <p className="text-xs text-kraft-700 font-mono mt-1">
-          Výsledek se převezme tlačítkem Převzít výsledek.
-        </p>
+      <div className="panel-paper rounded-xl p-4 flex flex-col items-center justify-center text-center min-h-[200px]">
+        <Loader2 className="w-5 h-5 animate-spin text-hazard-500 mb-2" />
+        <p className="text-sm font-semibold">Computation running</p>
+        <p className="text-xs text-kraft-700 mt-1">Use Collect result once it finishes.</p>
       </div>
     );
   }
 
   if (scan.status === 'failed') {
     return (
-      <div className="panel-paper rounded-xl p-5 h-full flex flex-col justify-center min-h-[200px]">
-        <div className="flex items-start gap-2.5 text-rose-300">
+      <div className="panel-paper rounded-xl p-4 flex flex-col justify-center min-h-[200px]">
+        <div className="flex items-start gap-2.5 text-rose-600">
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <div className="text-xs">
-            <span className="font-semibold block text-white text-sm">Výpočet selhal</span>
-            <span className="font-mono">{scan.error ?? 'Bez bližšího popisu.'}</span>
+            <span className="font-semibold block text-sm">Computation failed</span>
+            <span className="font-mono">{scan.error ?? 'No further detail.'}</span>
           </div>
         </div>
       </div>
@@ -61,36 +50,29 @@ export default function QuantificationCard({ scan }: QuantificationCardProps) {
   }
 
   return (
-    <div className="panel-paper rounded-xl p-5 flex flex-col h-full">
-      <div className="flex items-center justify-between pb-3 border-b border-paper-400">
-        <div className="flex items-center space-x-2.5">
-          <div className="p-2 rounded-lg bg-paper-50 text-cyan-600 border border-paper-400">
-            <Cpu className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold font-display uppercase tracking-wider text-composite-900">
-              Naměřené parametry
-            </h3>
-            <p className="text-[11px] text-kraft-600 font-mono">
-              {scan.scan_date} • {scan.months_post_op} měs. po plastice
-            </p>
-          </div>
+    <div className="panel-paper rounded-xl p-4">
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-paper-400">
+        <div className="flex items-center gap-2.5">
+          <Cpu className="w-4 h-4 text-cyan-600" />
+          <h2 className="text-lg font-bold font-display uppercase tracking-wider">
+            Measured parameters
+          </h2>
         </div>
-        {scan.is_demo && (
-          <span className="badge-hazard text-[11px] px-2 py-0.5 rounded">UKÁZKOVÁ DATA</span>
-        )}
+        <span className="text-[11px] font-mono text-kraft-700 whitespace-nowrap">
+          {scan.scan_date} · {scan.months_post_op} mo
+        </span>
       </div>
 
-      <div className="mt-4 space-y-4 flex-1">
+      <div className="mt-3 space-y-3">
         {GROUP_ORDER.map((group) => {
           const definitions = METRIC_DEFINITIONS.filter((definition) => definition.group === group);
           if (definitions.length === 0) return null;
           return (
             <div key={group}>
-              <div className="text-[11px] font-mono uppercase tracking-wider text-kraft-600 mb-2">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-kraft-600 mb-1.5">
                 {group}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 {definitions.map((definition) => (
                   <MetricTile
                     key={definition.key}

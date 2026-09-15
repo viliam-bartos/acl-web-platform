@@ -11,11 +11,13 @@ import {
 } from 'recharts';
 import { AlarmClock, Clock, TrendingUp } from 'lucide-react';
 import { ScanRecord, TREND_METRICS, MetricDefinition, formatMetric } from '../types';
+import { Theme, chartPalette } from '../services/theme';
 
 interface TrendChartProps {
   scans?: ScanRecord[];
   selectedScanId?: string;
   onSelectScan: (scan: ScanRecord) => void;
+  theme: Theme;
 }
 
 interface TrendPoint {
@@ -41,17 +43,14 @@ const TrendTooltip: React.FC<TrendTooltipProps> = ({ active, payload, label, def
   if (!active || !payload || payload.length === 0) return null;
   const point = payload[0].payload;
   return (
-    <div className="bg-paper-50 p-3 rounded-lg border border-paper-400 text-xs font-mono text-composite-900 space-y-1.5 shadow-lg">
-      <div className="font-semibold flex items-center justify-between gap-4 border-b border-paper-300 pb-1">
-        <span>{label} MĚSÍCŮ</span>
+    <div className="bg-paper-50 p-2.5 rounded-lg border border-paper-400 text-xs font-mono space-y-1 shadow-lg">
+      <div className="flex items-center justify-between gap-4 border-b border-paper-300 pb-1">
+        <span>{label} months</span>
         <span className="text-kraft-700 text-[11px]">{point.scan_date}</span>
       </div>
       <div className="flex items-center justify-between gap-6">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-paper-200 inline-block" />
-          {definition.label}:
-        </span>
-        <span className="font-bold text-composite-900">
+        <span>{definition.label}:</span>
+        <span className="font-bold">
           {formatMetric(point.value, definition)} {definition.unit}
         </span>
       </div>
@@ -59,9 +58,10 @@ const TrendTooltip: React.FC<TrendTooltipProps> = ({ active, payload, label, def
   );
 };
 
-export default function TrendChart({ scans = [], selectedScanId, onSelectScan }: TrendChartProps) {
+export default function TrendChart({ scans = [], selectedScanId, onSelectScan, theme }: TrendChartProps) {
   const [metricKey, setMetricKey] = useState<MetricDefinition['key']>(TREND_METRICS[0].key);
   const definition = TREND_METRICS.find((metric) => metric.key === metricKey) ?? TREND_METRICS[0];
+  const palette = chartPalette(theme);
 
   const sortedScans = useMemo(
     () => [...scans].sort((a, b) => a.months_post_op - b.months_post_op),
@@ -85,29 +85,21 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
   if (sortedScans.length === 0) {
     return (
       <div className="panel-paper rounded-xl p-6 text-center">
-        <TrendingUp className="w-8 h-8 mx-auto mb-2 text-kraft-600" />
-        <p className="text-sm font-semibold text-composite-900">Zatím žádná vyšetření</p>
+        <TrendingUp className="w-7 h-7 mx-auto mb-2 text-kraft-600" />
+        <p className="text-sm font-semibold">No examinations yet</p>
       </div>
     );
   }
 
   return (
-    <div className="panel-paper rounded-xl p-5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-paper-400">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-paper-200 text-composite-900">
-            <TrendingUp className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold font-display uppercase tracking-wider text-composite-900">
-              Vývoj štěpu v čase
-            </h2>
-          </div>
-        </div>
+    <div className="panel-paper rounded-xl p-4">
+      <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-paper-400">
+        <TrendingUp className="w-5 h-5 text-kraft-600" />
+        <h2 className="text-lg font-bold font-display uppercase tracking-wider">
+          Graft development over time
+        </h2>
       </div>
 
-      {/* Metric selector */}
       <div className="flex flex-wrap gap-1.5 mt-3">
         {TREND_METRICS.map((metric) => (
           <button
@@ -117,7 +109,7 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
             className={`px-2.5 py-1 rounded text-[11px] font-mono border transition-colors cursor-pointer ${
               metric.key === definition.key
                 ? 'bg-composite-900 text-paper-50 border-composite-900 font-semibold'
-                : 'bg-paper-50 text-composite-900 border-paper-400 hover:bg-paper-200'
+                : 'bg-paper-100 border-paper-400 hover:bg-paper-200'
             }`}
           >
             {metric.label}
@@ -126,19 +118,18 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
         ))}
       </div>
 
-      {/* Chart */}
-      <div className="w-full h-72 sm:h-80 mt-4">
+      <div className="w-full h-72 mt-3">
         {chartData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-center px-6">
-            <p className="text-xs text-kraft-700 font-mono">
-              Pro metriku „{definition.label}“ zatím není naměřená žádná hodnota.
+            <p className="text-xs font-mono text-kraft-700">
+              No measured value for {definition.label} yet.
             </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={chartData}
-              margin={{ top: 20, right: 20, bottom: 20, left: -10 }}
+              margin={{ top: 16, right: 16, bottom: 8, left: -12 }}
               onClick={(state) => {
                 const clicked = state?.activePayload?.[0]?.payload as TrendPoint | undefined;
                 if (clicked) onSelectScan(clicked.raw);
@@ -146,17 +137,17 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
             >
               <defs>
                 <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1A1D20" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#1A1D20" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={palette.line} stopOpacity={0.18} />
+                  <stop offset="95%" stopColor={palette.line} stopOpacity={0} />
                 </linearGradient>
               </defs>
 
-              <CartesianGrid strokeDasharray="3 3" stroke="#DFD3BD" />
+              <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} />
 
               <XAxis
                 dataKey="months"
-                unit=" m"
-                stroke="#78716C"
+                unit=" mo"
+                stroke={palette.axis}
                 fontSize={11}
                 fontFamily="JetBrains Mono"
                 tickLine={false}
@@ -165,11 +156,11 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
               <YAxis
                 domain={['auto', 'auto']}
                 unit={definition.unit === '–' ? '' : ` ${definition.unit}`}
-                stroke="#1A1D20"
+                stroke={palette.axis}
                 fontSize={11}
                 fontFamily="JetBrains Mono"
                 tickLine={false}
-                width={78}
+                width={80}
               />
 
               <Tooltip content={<TrendTooltip definition={definition} />} />
@@ -178,19 +169,19 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
                 type="monotone"
                 dataKey="value"
                 name={definition.label}
-                stroke="#1A1D20"
-                strokeWidth={3}
+                stroke={palette.line}
+                strokeWidth={2}
                 fill="url(#trendGradient)"
                 connectNulls={false}
-                activeDot={{ r: 5, stroke: '#1A1D20', strokeWidth: 2, fill: '#FAF6EE' }}
+                activeDot={{ r: 5, stroke: palette.line, strokeWidth: 2, fill: palette.marker }}
               />
               <Line
                 type="monotone"
                 dataKey="value"
                 name={definition.label}
-                stroke="#1A1D20"
+                stroke={palette.line}
                 strokeWidth={2}
-                dot={{ r: 3.5, stroke: '#1A1D20', fill: '#FAF6EE' }}
+                dot={{ r: 3.5, stroke: palette.line, fill: palette.marker }}
                 activeDot={false}
                 legendType="none"
               />
@@ -199,17 +190,16 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
         )}
       </div>
 
-      {/* Timeline */}
-      <div className="mt-4 pt-3 border-t border-paper-400">
+      <div className="mt-3 pt-3 border-t border-paper-400">
         <div className="text-xs font-mono text-kraft-700 mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-medium text-composite-900">
+          <span className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
-            ČASOVÁ OSA VYŠETŘENÍ:
+            EXAMINATIONS
           </span>
-          <span className="text-[11px]">{sortedScans.length} ZÁZNAMŮ</span>
+          <span className="text-[11px]">{sortedScans.length}</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
           {sortedScans.map((scan) => {
             const isSelected = scan.id === selectedScanId;
             const value = scan.metrics[definition.key];
@@ -217,34 +207,29 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
               <button
                 key={scan.id}
                 onClick={() => onSelectScan(scan)}
-                className={`p-2.5 rounded-lg text-left transition-all border text-xs cursor-pointer font-mono ${
+                className={`p-2 rounded-lg text-left transition-all border text-xs cursor-pointer font-mono ${
                   isSelected
-                    ? 'bg-kraft-400 text-composite-950 border-kraft-600 shadow-sm font-semibold'
-                    : 'bg-paper-50 border-paper-400 text-composite-900 hover:bg-paper-200'
+                    ? 'bg-kraft-400 text-composite-950 border-kraft-600 font-semibold'
+                    : 'bg-paper-100 border-paper-400 hover:bg-paper-200'
                 }`}
               >
                 <div className="flex items-center justify-between text-xs gap-2">
-                  <span className="font-bold">{scan.months_post_op} měs.</span>
+                  <span className="font-bold">{scan.months_post_op} mo</span>
                   {scan.status !== 'ready' ? (
                     <span className="flex items-center gap-1 text-[10px] text-hazard-600 font-bold">
                       {scan.status === 'pending' ? (
                         <>
-                          <AlarmClock className="w-3 h-3" /> BĚŽÍ
+                          <AlarmClock className="w-3 h-3" /> RUNNING
                         </>
                       ) : (
-                        'SELHALO'
+                        'FAILED'
                       )}
                     </span>
                   ) : (
-                    <span className="text-[11px] opacity-80">
-                      {formatMetric(value, definition)}
-                    </span>
+                    <span className="text-[11px]">{formatMetric(value, definition)}</span>
                   )}
                 </div>
-                <div className="text-[11px] opacity-75 mt-1 flex items-center justify-between gap-2">
-                  <span>{definition.unit !== '–' ? definition.unit : definition.label}</span>
-                  <span className="text-[10px]">{scan.scan_date}</span>
-                </div>
+                <div className="text-[10px] text-kraft-700 mt-1">{scan.scan_date}</div>
               </button>
             );
           })}

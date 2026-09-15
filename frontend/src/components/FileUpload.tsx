@@ -54,11 +54,11 @@ export default function FileUpload({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      setErrorMsg('Please select or drop an MRI scan file (DICOM / NIfTI).');
+      setErrorMsg('Select an MRI file (.nii, .nii.gz, .dcm).');
       return;
     }
     if (!patientId) {
-      setErrorMsg('Please select a subject ID before uploading.');
+      setErrorMsg('Select a patient first.');
       return;
     }
 
@@ -68,20 +68,20 @@ export default function FileUpload({
       setSelectedFile(null);
       if (inputRef.current) inputRef.current.value = '';
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Upload and 3D reconstruction failed.');
+      setErrorMsg(err instanceof Error ? err.message : 'Upload failed.');
     }
   };
 
   const handleQuickReference = async () => {
     if (!patientId) {
-      setErrorMsg('Please select a subject ID first.');
+      setErrorMsg('Select a patient first.');
       return;
     }
     try {
       setErrorMsg('');
       await onAnalyzeReference(patientId, parseFloat(monthsPostOp) || 6.0);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Reference scan evaluation failed.');
+      setErrorMsg(err instanceof Error ? err.message : 'Reference analysis failed.');
     }
   };
 
@@ -89,12 +89,12 @@ export default function FileUpload({
     <div className="panel-paper rounded-xl p-5 mb-6">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-paper-400">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-lg bg-paper-50 text-kraft-600 border border-paper-400">
+          <div className="p-2.5 rounded-lg bg-paper-100 text-kraft-600 border border-paper-400">
             <UploadCloud className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wider text-composite-900 flex items-center gap-2">
-              Nahrání MRI Vyšetření
+              MRI examination
             </h2>
           </div>
         </div>
@@ -104,11 +104,11 @@ export default function FileUpload({
           type="button"
           onClick={handleQuickReference}
           disabled={isProcessing}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-paper-50 hover:bg-paper-200 text-kraft-700 border border-kraft-400/40 text-xs font-mono font-medium transition-all shadow-sm disabled:opacity-50"
-          title="Načíst referenční MRI data (Case 074)"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-paper-100 hover:bg-paper-200 text-kraft-700 border border-kraft-400/40 text-xs font-mono font-medium transition-all shadow-sm disabled:opacity-50"
+          title="Load reference MRI (case 074)"
         >
           <Database className="w-3.5 h-3.5 text-kraft-600" />
-          <span>Referenční MRI (Case 074)</span>
+          <span>Reference MRI (case 074)</span>
         </button>
       </div>
 
@@ -123,7 +123,7 @@ export default function FileUpload({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-1">
             <label className="block text-xs font-mono uppercase tracking-wider text-kraft-700 mb-1.5 flex items-center justify-between">
-              <span>Time Post-Op (Months)</span>
+              <span>Months post-op</span>
               <span className="text-[11px] text-cyan-600 font-mono font-bold">{monthsPostOp} mo</span>
             </label>
             <input
@@ -134,17 +134,17 @@ export default function FileUpload({
               required
               value={monthsPostOp}
               onChange={(e) => setMonthsPostOp(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg bg-paper-50 border border-paper-400 text-composite-900 text-sm focus:border-kraft-400 focus:outline-none font-mono"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-paper-100 border border-paper-400 text-composite-900 text-sm focus:border-kraft-400 focus:outline-none font-mono"
             />
             <span className="text-[10px] text-kraft-600 mt-1 block font-mono">e.g. 1.5, 3.0, 6.0, 12.0, 24.0</span>
           </div>
 
           <div className="sm:col-span-2">
             <label className="block text-xs font-mono uppercase tracking-wider text-kraft-700 mb-1.5">
-              Subject Target ID
+              Subject
             </label>
-            <div className="px-3.5 py-2.5 rounded-lg bg-paper-50 border border-paper-400 text-kraft-600 text-sm font-mono flex items-center justify-between">
-              <span className="font-bold">{patientId || 'Není vybrán pacient'}</span>
+            <div className="px-3.5 py-2.5 rounded-lg bg-paper-100 border border-paper-400 text-kraft-600 text-sm font-mono flex items-center justify-between">
+              <span className="font-bold">{patientId || 'No patient selected'}</span>
             </div>
           </div>
         </div>
@@ -160,15 +160,15 @@ export default function FileUpload({
             dragActive
               ? 'border-hazard-500 bg-hazard-500/10 scale-[0.99]'
               : selectedFile
-              ? 'border-kraft-400 bg-paper-50/80'
-              : 'border-paper-400 hover:border-kraft-400/60 bg-paper-50/60'
+              ? 'border-kraft-400 bg-paper-100/80'
+              : 'border-paper-400 hover:border-kraft-400/60 bg-paper-100/60'
           }`}
         >
           <input
             ref={inputRef}
             type="file"
             onChange={handleChange}
-            accept=".nii,.gz,.dcm,.zip,.mha,.nrrd"
+            accept=".nii,.gz,.dcm"
             className="hidden"
           />
 
@@ -181,20 +181,20 @@ export default function FileUpload({
                 {selectedFile.name}
               </div>
               <div className="text-xs text-cyan-600 font-mono">
-                {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready for 3D processing
+                {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready
               </div>
               <span className="text-[11px] text-kraft-600 underline pt-1 font-mono">Click to change file</span>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center space-y-2">
-              <div className="p-3 rounded-full bg-paper-50 text-kraft-700 group-hover:text-kraft-600">
+              <div className="p-3 rounded-full bg-paper-100 text-kraft-700 group-hover:text-kraft-600">
                 <Layers className="w-6 h-6" />
               </div>
               <div className="text-sm font-medium text-composite-900">
-                Drag & drop 3D MRI volume or <span className="text-kraft-600 underline">browse</span>
+                Drop an MRI volume or <span className="text-kraft-600 underline">browse</span>
               </div>
               <div className="text-xs text-kraft-600 font-mono">
-                Supports DICOM (.dcm, .zip), NIfTI (.nii, .nii.gz), or MHA
+                NIfTI (.nii, .nii.gz) or DICOM (.dcm)
               </div>
             </div>
           )}
@@ -210,12 +210,12 @@ export default function FileUpload({
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Probíhá zpracování a 3D rekonstrukce...</span>
+                <span>Processing...</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>Spustit 3D Analýzu</span>
+                <span>Run analysis</span>
               </>
             )}
           </button>

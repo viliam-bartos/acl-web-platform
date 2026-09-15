@@ -1,51 +1,51 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // Values live in CSS variables (src/index.css) so one utility class
+        // keeps its role in both themes: `paper` is the surface ramp,
+        // `composite` is the ink ramp.
         paper: {
-          50: '#FAF6EE',
-          100: '#F4EBD9', // Nažloutlý laboratorní papír
-          200: '#EFE6D5',
-          300: '#E4D8C2',
-          400: '#D5C5A8',
+          50: 'var(--paper-50)',
+          100: 'var(--paper-100)',
+          200: 'var(--paper-200)',
+          300: 'var(--paper-300)',
+          400: 'var(--paper-400)',
         },
         kraft: {
-          300: '#D6BEA2',
-          400: '#C4A482', // Kraftový karton
-          500: '#B89772',
-          600: '#9E7B56',
-          700: '#7D5F3F',
+          300: 'var(--kraft-300)',
+          400: 'var(--kraft-400)',
+          500: 'var(--kraft-500)',
+          600: 'var(--kraft-600)',
+          700: 'var(--kraft-700)',
         },
         composite: {
-          800: '#2D3237',
-          850: '#23272A', // Uhlová šedá (břidlice)
-          900: '#1A1D20', // Tmavý kompozitní plast
-          950: '#121416', // Hluboký technický podklad
+          800: 'var(--composite-800)',
+          850: 'var(--composite-850)',
+          900: 'var(--composite-900)',
+          950: 'var(--composite-950)',
         },
         hazard: {
-          400: '#FA9238',
-          500: '#F58220', // Výstražná Valve/Hazard oranžová
-          600: '#E06D10',
-          700: '#C05608',
+          400: 'var(--hazard-400)',
+          500: 'var(--hazard-500)',
+          600: 'var(--hazard-600)',
+          700: 'var(--hazard-700)',
         },
         cyan: {
-          400: '#5AC3FF',
-          500: '#38B6FF', // Technická cyan
-          600: '#0EA5E9',
+          400: 'var(--cyan-400)',
+          500: 'var(--cyan-500)',
+          600: 'var(--cyan-600)',
         },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['"Barlow Condensed"', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-      }
+      },
     },
   },
   plugins: [],
-}
+};

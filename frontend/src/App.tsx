@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Activity, AlertCircle, AlertTriangle, CheckCircle, Database, RefreshCw } from 'lucide-react';
+import {
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  Database as DatabaseIcon,
+  Moon,
+  RefreshCw,
+  Sun,
+} from 'lucide-react';
 import PatientSelect from './components/PatientSelect';
 import FileUpload from './components/FileUpload';
 import MeshViewer from './components/MeshViewer';
@@ -17,6 +26,7 @@ import {
   latestReadyScan,
   refreshScan,
 } from './services/api';
+import { Theme, applyTheme, readStoredTheme } from './services/theme';
 import { Patient, PatientCreateData, PatientHistory, ScanRecord, WorkerHealth } from './types';
 
 interface ToastState {
@@ -25,6 +35,7 @@ interface ToastState {
 }
 
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(() => readStoredTheme());
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>('ACL_042');
   const [history, setHistory] = useState<PatientHistory | null>(null);
@@ -38,6 +49,10 @@ export default function App() {
   const [isDatabaseOpen, setIsDatabaseOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 6000);
@@ -49,7 +64,7 @@ export default function App() {
       setWorker(health.compute_worker);
       setBackendOnline(true);
     } catch (err) {
-      console.error('Backend není dostupný:', err);
+      console.error('Backend unreachable:', err);
       setBackendOnline(false);
       setWorker(null);
     }
@@ -64,7 +79,7 @@ export default function App() {
       const targetId = preferredId || (data.length > 0 ? data[0].patient_id : null);
       if (targetId) setSelectedPatientId(targetId);
     } catch (err) {
-      console.error('Failed to connect to backend:', err);
+      console.error('Could not load patients:', err);
       setBackendOnline(false);
     } finally {
       setIsLoadingCohort(false);
@@ -79,7 +94,7 @@ export default function App() {
       setBackendOnline(true);
       setSelectedScan(latestReadyScan(data.scans));
     } catch (err) {
-      console.error(`Failed to load history for ${patientId}:`, err);
+      console.error(`Could not load history for ${patientId}:`, err);
     }
   };
 
@@ -106,7 +121,7 @@ export default function App() {
     try {
       const res = await analyzeScan(patientId, monthsPostOp, file);
       setSelectedScan(res.scan);
-      await applyResult(patientId, 'Vyšetření zpracováno.', res.warnings);
+      await applyResult(patientId, 'Examination processed.', res.warnings);
     } catch (err) {
       if (err instanceof AnalysisPendingError) {
         setPendingScanId(err.scanId ?? null);
@@ -114,7 +129,7 @@ export default function App() {
         showToast(err.message, 'error');
         await loadHistory(patientId);
       } else {
-        showToast(err instanceof Error ? err.message : 'Analýza selhala.', 'error');
+        showToast(err instanceof Error ? err.message : 'Analysis failed.', 'error');
       }
       throw err;
     } finally {
@@ -128,14 +143,14 @@ export default function App() {
     try {
       const res = await analyzeReferenceScan(patientId, monthsPostOp);
       setSelectedScan(res.scan);
-      await applyResult(patientId, 'Referenční případ zpracován.', res.warnings);
+      await applyResult(patientId, 'Reference case processed.', res.warnings);
     } catch (err) {
       if (err instanceof AnalysisPendingError) {
         setPendingScanId(err.scanId ?? null);
         showToast(err.message, 'error');
         await loadHistory(patientId);
       } else {
-        showToast(err instanceof Error ? err.message : 'Analýza selhala.', 'error');
+        showToast(err instanceof Error ? err.message : 'Analysis failed.', 'error');
       }
       throw err;
     } finally {
@@ -151,12 +166,12 @@ export default function App() {
       if (res.status === 'success') {
         setPendingScanId(null);
         setSelectedScan(res.scan);
-        await applyResult(selectedPatientId, 'Výsledek převzat.', res.warnings);
+        await applyResult(selectedPatientId, 'Result collected.', res.warnings);
       } else {
         showToast(res.message);
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Výsledek se nepodařilo převzít.', 'error');
+      showToast(err instanceof Error ? err.message : 'Could not collect the result.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -164,30 +179,40 @@ export default function App() {
 
   const handleCreatePatient = async (patientData: PatientCreateData) => {
     const res = await createPatient(patientData);
-    showToast(`Registrován pacient ${res.patient_id}`);
+    showToast(`Patient ${res.patient_id} registered.`);
     await loadPatients(res.patient_id);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-paper-100 text-composite-900 font-sans">
+    <div className="min-h-screen flex flex-col font-sans">
       <header className="sticky top-0 z-40 bg-paper-50 border-b border-paper-400 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <Activity className="w-5 h-5 text-kraft-600" />
-          <h1 className="text-lg font-bold font-display uppercase tracking-wider">ACL</h1>
+          <h1 className="text-lg font-bold font-display uppercase tracking-wider">
+            Knee Graft Analysis
+          </h1>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono">
           <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-1.5 rounded-lg bg-paper-100 hover:bg-paper-200 border border-paper-400 transition-colors cursor-pointer"
+            title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
+          <button
             onClick={() => setIsDatabaseOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-paper-100 hover:bg-paper-200 border border-paper-400 transition-colors cursor-pointer"
           >
-            <Database className="w-4 h-4 text-kraft-600" />
-            Databáze
+            <DatabaseIcon className="w-4 h-4 text-kraft-600" />
+            Database
           </button>
 
           <div
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-paper-100 border border-paper-400"
-            title={worker?.detail ?? worker?.device ?? 'Výpočetní worker'}
+            title={worker?.detail ?? worker?.device ?? 'Compute worker'}
           >
             <span className={`w-2 h-2 rounded-full ${worker?.reachable ? 'bg-cyan-500' : 'bg-hazard-500'}`} />
             <span className="text-kraft-700">Worker</span>
@@ -212,7 +237,7 @@ export default function App() {
             className={`p-3 rounded-lg flex items-center justify-between border text-xs font-mono ${
               toast.type === 'error'
                 ? 'bg-rose-100 border-rose-300 text-rose-800'
-                : 'bg-paper-50 border-paper-400 text-composite-900'
+                : 'bg-paper-50 border-paper-400'
             }`}
           >
             <span className="flex items-center gap-2">
@@ -224,7 +249,7 @@ export default function App() {
               {toast.message}
             </span>
             <button onClick={() => setToast(null)} className="px-2 cursor-pointer">
-              zavřít
+              close
             </button>
           </div>
         )}
@@ -234,10 +259,10 @@ export default function App() {
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 font-bold text-hazard-600">
                 <AlertTriangle className="w-4 h-4" />
-                Poznámky k výpočtu
+                Notes from the computation
               </span>
               <button onClick={() => setWarnings([])} className="px-2 cursor-pointer">
-                zavřít
+                close
               </button>
             </div>
             {warnings.map((warning, index) => (
@@ -251,7 +276,7 @@ export default function App() {
         {pendingScanId && (
           <div className="p-3 rounded-lg bg-paper-50 border border-cyan-500/50 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
             <span>
-              Výpočet běží, vyšetření {pendingScanId} je zařazené.
+              Still computing. Examination <strong>{pendingScanId}</strong> is queued.
             </span>
             <button
               onClick={handleRefreshPending}
@@ -259,7 +284,7 @@ export default function App() {
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white font-bold transition-colors disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? 'animate-spin' : ''}`} />
-              Převzít výsledek
+              Collect result
             </button>
           </div>
         )}
@@ -274,22 +299,27 @@ export default function App() {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7">
             <MeshViewer scan={selectedScan} patientId={selectedPatientId} />
+          </div>
+          <div className="lg:col-span-5">
             {selectedScan && <QuantificationCard scan={selectedScan} />}
           </div>
 
-          <div className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-8">
+            <TrendChart
+              scans={history?.scans || []}
+              selectedScanId={selectedScan?.id}
+              onSelectScan={(scan) => setSelectedScan(scan)}
+              theme={theme}
+            />
+          </div>
+          <div className="lg:col-span-4">
             <FileUpload
               patientId={selectedPatientId}
               onUploadSuccess={handleUploadScan}
               onAnalyzeReference={handleAnalyzeReference}
               isProcessing={isProcessing}
-            />
-            <TrendChart
-              scans={history?.scans || []}
-              selectedScanId={selectedScan?.id}
-              onSelectScan={(scan) => setSelectedScan(scan)}
             />
           </div>
         </div>

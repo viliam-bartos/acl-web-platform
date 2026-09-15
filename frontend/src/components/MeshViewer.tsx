@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Expand, Eye, Layers, Minimize, RefreshCw, RotateCw, Shrink } from 'lucide-react';
+import { Box, Expand, Eye, Layers, RefreshCw, RotateCw, Shrink } from 'lucide-react';
 import { resolveModelUrl } from '../services/api';
 import { ScanRecord } from '../types';
 
@@ -30,12 +30,12 @@ const INITIAL_LAYERS: LayerState = {
   axis: true,
 };
 
-/** Materiály, které mají zůstat průhledné i po opětovném zobrazení. */
+/** Materials that stay transparent after being shown again. */
 const TRANSPARENT_PARTS = new Set(['femur', 'tibia']);
 
 /**
- * Přiřadí materiál k vrstvě. Pořadí je podstatné: `Femoral_Centroid` obsahuje
- * "femur" a `ACL_Axis` obsahuje "acl", takže specifické názvy musí být první.
+ * Maps a material to its layer. Order matters: `Femoral_Centroid` contains
+ * "femur" and `ACL_Axis` contains "acl", so the specific names come first.
  */
 function layerForMaterial(name: string): keyof LayerState | null {
   if (name.includes('centroid')) return 'centroids';
@@ -52,21 +52,26 @@ function layerForMaterial(name: string): keyof LayerState | null {
 }
 
 const LAYER_BUTTONS: Array<{ key: keyof LayerState; label: string; swatch: string; title: string }> = [
-  { key: 'femur', label: 'Femur', swatch: 'bg-white border border-slate-400', title: 'Kost stehenní' },
-  { key: 'tibia', label: 'Tibia', swatch: 'bg-white border border-slate-400', title: 'Kost holenní' },
-  { key: 'acl', label: 'Vaz', swatch: 'bg-yellow-400', title: 'Štěp' },
-  { key: 'footprints', label: 'Úpony', swatch: 'bg-orange-500', title: 'Úponové plochy' },
-  { key: 'plateau', label: 'Plato', swatch: 'bg-cyan-500', title: 'Rovina tibiálního plata' },
-  { key: 'grid', label: 'B&H', swatch: 'bg-cyan-500', title: 'Bernard-Hertelova mřížka a Blumensaatova linie' },
-  { key: 'centroids', label: 'Těžiště', swatch: 'bg-sky-500', title: 'Těžiště femorálního a tibiálního úponu' },
-  { key: 'axis', label: 'Osa', swatch: 'bg-purple-400', title: 'Osa procházející štěpem' },
+  { key: 'femur', label: 'Femur', swatch: 'bg-white border border-slate-400', title: 'Femur' },
+  { key: 'tibia', label: 'Tibia', swatch: 'bg-white border border-slate-400', title: 'Tibia' },
+  { key: 'acl', label: 'Graft', swatch: 'bg-yellow-400', title: 'Graft' },
+  { key: 'footprints', label: 'Footprints', swatch: 'bg-orange-500', title: 'Attachment footprints' },
+  { key: 'plateau', label: 'Plateau', swatch: 'bg-cyan-500', title: 'Tibial plateau plane' },
+  { key: 'grid', label: 'B&H', swatch: 'bg-cyan-500', title: 'Bernard-Hertel grid and Blumensaat line' },
+  { key: 'centroids', label: 'Centroids', swatch: 'bg-sky-500', title: 'Femoral and tibial footprint centroids' },
+  { key: 'axis', label: 'Axis', swatch: 'bg-purple-400', title: 'Axis through the graft' },
 ];
 
-const CAMERA_PRESETS: Array<{ key: 'anterior' | 'sagittal' | 'axial' | 'oblique'; label: string; orbit: string; title: string }> = [
-  { key: 'anterior', label: 'ANT', orbit: '0deg 85deg 105%', title: 'Přední pohled' },
-  { key: 'sagittal', label: 'SAG', orbit: '90deg 85deg 105%', title: 'Sagitální pohled' },
-  { key: 'axial', label: 'AX', orbit: '0deg 0deg 105%', title: 'Axiální pohled' },
-  { key: 'oblique', label: '3D', orbit: '35deg 80deg 105%', title: 'Šikmý pohled' },
+const CAMERA_PRESETS: Array<{
+  key: 'anterior' | 'sagittal' | 'axial' | 'oblique';
+  label: string;
+  orbit: string;
+  title: string;
+}> = [
+  { key: 'anterior', label: 'ANT', orbit: '0deg 85deg 105%', title: 'Anterior view' },
+  { key: 'sagittal', label: 'SAG', orbit: '90deg 85deg 105%', title: 'Sagittal view' },
+  { key: 'axial', label: 'AX', orbit: '0deg 0deg 105%', title: 'Axial view' },
+  { key: 'oblique', label: '3D', orbit: '35deg 80deg 105%', title: 'Oblique view' },
 ];
 
 export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
@@ -125,11 +130,9 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      if (isOverlayOnly) {
-        setIsOverlayOnly(false);
-        setIsFullscreen(false);
-      }
+      if (event.key !== 'Escape' || !isOverlayOnly) return;
+      setIsOverlayOnly(false);
+      setIsFullscreen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -169,11 +172,11 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
 
   if (!scan) {
     return (
-      <div className="panel-paper rounded-xl p-10 flex flex-col items-center justify-center min-h-[420px] text-center">
+      <div className="panel-paper rounded-xl p-4 flex flex-col items-center justify-center min-h-[420px] text-center">
         <Box className="w-8 h-8 text-kraft-600 mb-3" />
-        <p className="text-sm font-semibold text-composite-900">Není vybráno vyšetření</p>
+        <p className="text-sm font-semibold">No examination selected</p>
         <p className="text-xs text-kraft-700 mt-1">
-          Vyberte pacienta a vyšetření, nebo nahrajte nový sken.
+          Select a patient and examination, or upload a scan.
         </p>
       </div>
     );
@@ -192,16 +195,16 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-paper-400">
         <div className="flex flex-wrap items-center gap-2.5">
           <Box className="w-5 h-5 text-kraft-600" />
-          <h2 className="text-lg font-bold font-display uppercase tracking-wider text-composite-900">
-            3D rekonstrukce
+          <h2 className="text-lg font-bold font-display uppercase tracking-wider">
+            3D reconstruction
           </h2>
           <span className="text-xs font-mono text-kraft-700">
-            {patientId} · {scan.months_post_op} měs.
+            {patientId} · {scan.months_post_op} mo
           </span>
-          {scan.is_demo && <span className="badge-hazard text-[11px] px-2 py-0.5 rounded">UKÁZKOVÁ DATA</span>}
+          {scan.is_demo && <span className="badge-hazard text-[11px] px-2 py-0.5 rounded">DEMO DATA</span>}
           {scan.status !== 'ready' && (
             <span className="badge-hazard text-[11px] px-2 py-0.5 rounded">
-              {scan.status === 'pending' ? 'VÝPOČET BĚŽÍ' : 'VÝPOČET SELHAL'}
+              {scan.status === 'pending' ? 'COMPUTING' : 'FAILED'}
             </span>
           )}
         </div>
@@ -212,9 +215,9 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
             className={`px-2.5 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-1.5 transition-colors cursor-pointer ${
               autoRotate
                 ? 'bg-hazard-500 text-composite-950 border-hazard-600 font-bold'
-                : 'bg-paper-50 border-paper-400 text-kraft-700 hover:bg-paper-200'
+                : 'bg-paper-100 border-paper-400 text-kraft-700 hover:bg-paper-200'
             }`}
-            title="Otáčení modelu"
+            title="Auto-rotate"
           >
             <RotateCw className="w-3.5 h-3.5" />
             <span>360</span>
@@ -222,8 +225,8 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
 
           <button
             onClick={() => setCameraPreset(CAMERA_PRESETS[0])}
-            className="p-1.5 rounded-lg bg-paper-50 hover:bg-paper-200 text-kraft-700 border border-paper-400 transition-colors cursor-pointer"
-            title="Obnovit výchozí pohled"
+            className="p-1.5 rounded-lg bg-paper-100 hover:bg-paper-200 text-kraft-700 border border-paper-400 transition-colors cursor-pointer"
+            title="Reset view"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -233,12 +236,12 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
             className={`px-2.5 py-1.5 rounded-lg text-xs font-mono border transition-colors flex items-center gap-1.5 cursor-pointer ${
               isFullscreen
                 ? 'bg-hazard-500 text-composite-950 border-hazard-600 font-bold'
-                : 'bg-paper-50 hover:bg-paper-200 text-kraft-700 border-paper-400'
+                : 'bg-paper-100 hover:bg-paper-200 text-kraft-700 border-paper-400'
             }`}
-            title={isFullscreen ? 'Ukončit celou obrazovku' : 'Zobrazit přes celou obrazovku'}
+            title={isFullscreen ? 'Leave fullscreen' : 'Show fullscreen'}
           >
             {isFullscreen ? <Shrink className="w-3.5 h-3.5" /> : <Expand className="w-3.5 h-3.5" />}
-            <span>{isFullscreen ? 'Zavřít' : 'Fullscreen'}</span>
+            <span>{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
           </button>
         </div>
       </div>
@@ -246,7 +249,7 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5 border-b border-paper-400">
         <span className="flex items-center gap-1.5 text-[11px] font-mono uppercase text-kraft-700">
           <Layers className="w-3.5 h-3.5" />
-          Vrstvy
+          Layers
         </span>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -257,7 +260,7 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
               title={button.title}
               className={`px-2.5 py-1 rounded border text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
                 layers[button.key]
-                  ? 'bg-paper-50 border-paper-400 text-composite-900 font-semibold'
+                  ? 'bg-paper-100 border-paper-400 font-semibold'
                   : 'bg-paper-200 border-paper-300 text-kraft-600 line-through opacity-60'
               }`}
             >
@@ -295,7 +298,7 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
             <model-viewer
               ref={modelViewerRef}
               src={modelUrl}
-              alt={`3D model kolene ${scan.id}`}
+              alt={`Knee model ${scan.id}`}
               camera-controls
               touch-action="pan-y"
               auto-rotate={autoRotate ? true : undefined}
@@ -318,7 +321,7 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
 
             <div className="absolute bottom-3 right-3 rounded px-2.5 py-1 text-[11px] font-mono text-kraft-700 bg-paper-50/80 border border-paper-400 pointer-events-none flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5" />
-              Rotace, zoom, posun
+              Rotate, zoom, pan
             </div>
           </>
         ) : (
@@ -326,12 +329,12 @@ export default function MeshViewer({ scan, patientId }: MeshViewerProps) {
             {scan.status === 'pending' ? (
               <>
                 <RefreshCw className="w-6 h-6 animate-spin text-hazard-500" />
-                <p className="text-sm text-composite-900">Model se ještě počítá</p>
+                <p className="text-sm">Model is still computing</p>
               </>
             ) : (
               <>
-                <Minimize className="w-6 h-6 text-kraft-600" />
-                <p className="text-sm text-composite-900">Model není k dispozici</p>
+                <Box className="w-6 h-6 text-kraft-600" />
+                <p className="text-sm">Model unavailable</p>
                 {scan.error && <p className="text-xs font-mono text-kraft-700">{scan.error}</p>}
               </>
             )}

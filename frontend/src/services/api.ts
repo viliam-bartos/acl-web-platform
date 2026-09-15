@@ -1,9 +1,9 @@
 /**
- * API service for communicating with the thin ACL Platform backend.
+ * Client for the thin ACL Platform backend.
  *
- * Backend je tenká vrstva: veškerý výpočet dělá worker na výkonném počítači.
- * Odtud se proto nikdy nepočítá ani neodhaduje žádná metrika – co nepřijde
- * z API, je `null` a v UI se zobrazí jako `—`.
+ * The backend computes nothing: every metric comes from the compute worker on
+ * the other machine. Nothing is derived or estimated here, and a metric the
+ * backend does not send stays `null` and renders as an em dash.
  */
 
 import {
@@ -29,9 +29,9 @@ export function resolveModelUrl(modelUrl: string | null | undefined): string {
 }
 
 /**
- * Chyba, kdy výpočet na workeru stále běží a překročil časový limit požadavku.
- * Backend v takovém případě založí vyšetření ve stavu `pending` a vrátí HTTP 504
- * včetně jeho ID – výsledek se pak dotáhne přes `refreshScan`.
+ * Raised when the worker is still computing and the request hit its time
+ * limit. The backend keeps the examination in `pending` state and returns its
+ * id, so the result can be collected later through `refreshScan`.
  */
 export class AnalysisPendingError extends Error {
   readonly scanId?: string;
@@ -68,13 +68,13 @@ function extractErrorDetail(payload: unknown, fallback: string): { message: stri
 
 async function readError(response: Response): Promise<{ message: string; scanId?: string }> {
   const payload = await response.json().catch(() => null);
-  return extractErrorDetail(payload, `Požadavek selhal (HTTP ${response.status}).`);
+  return extractErrorDetail(payload, `Request failed (HTTP ${response.status}).`);
 }
 
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/health`);
   if (!response.ok) {
-    throw new Error(`Stav služby se nepodařilo načíst: ${response.statusText}`);
+    throw new Error(`Could not read service health: ${response.statusText}`);
   }
   return response.json();
 }
@@ -82,7 +82,7 @@ export async function getHealth(): Promise<HealthResponse> {
 export async function getPatients(): Promise<Patient[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/patients`);
   if (!response.ok) {
-    throw new Error(`Failed to load patients: ${response.statusText}`);
+    throw new Error(`Could not load patients: ${response.statusText}`);
   }
   return response.json();
 }
@@ -92,12 +92,16 @@ export async function getPatientHistory(patientId: string): Promise<PatientHisto
     `${API_BASE_URL}/api/v1/patients/${encodeURIComponent(patientId)}/history`
   );
   if (!response.ok) {
-    throw new Error(`Failed to load history for ${patientId}: ${response.statusText}`);
+    throw new Error(`Could not load history for ${patientId}: ${response.statusText}`);
   }
   return response.json();
 }
 
-async function submitAnalysis(url: string, formData: FormData, fallbackMessage: string): Promise<AnalyzeResponse> {
+async function submitAnalysis(
+  url: string,
+  formData: FormData,
+  fallbackMessage: string
+): Promise<AnalyzeResponse> {
   const response = await fetch(url, { method: 'POST', body: formData });
 
   if (response.status === 504) {
@@ -131,13 +135,10 @@ export async function analyzeScan(
     formData.append('laterality', options.laterality);
   }
 
-  return submitAnalysis(`${API_BASE_URL}/api/v1/scans/analyze`, formData, 'Analýza skenu selhala.');
+  return submitAnalysis(`${API_BASE_URL}/api/v1/scans/analyze`, formData, 'Scan analysis failed.');
 }
 
-/**
- * Nechá worker zhodnotit jeho vestavěný referenční případ (074).
- * Aplikace přitom nezná žádnou cestu k datům na straně workera.
- */
+/** Asks the worker to analyse its own built-in reference case (074). */
 export async function analyzeReferenceScan(
   patientId: string,
   monthsPostOp: number | string,
@@ -151,18 +152,17 @@ export async function analyzeReferenceScan(
   return submitAnalysis(
     `${API_BASE_URL}/api/v1/scans/analyze-reference`,
     formData,
-    'Zhodnocení referenčního skenu selhalo.'
+    'Reference scan analysis failed.'
   );
 }
 
-/** Dotáhne výsledek vyšetření, které doběhlo až po časovém limitu požadavku. */
 export async function refreshScan(scanId: string): Promise<AnalyzeResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/scans/${encodeURIComponent(scanId)}/refresh`, {
     method: 'POST',
   });
   if (!response.ok) {
     const { message } = await readError(response);
-    throw new Error(message || 'Výsledek se nepodařilo dotáhnout.');
+    throw new Error(message || 'Could not collect the result.');
   }
   return response.json();
 }
@@ -178,7 +178,7 @@ export async function createPatient(patientData: PatientCreateData): Promise<Pat
 
   if (!response.ok) {
     const { message } = await readError(response);
-    throw new Error(message || 'Failed to create patient record');
+    throw new Error(message || 'Could not register the patient.');
   }
 
   return response.json();
@@ -187,7 +187,7 @@ export async function createPatient(patientData: PatientCreateData): Promise<Pat
 export async function getDatabaseStats(): Promise<DatabaseStats> {
   const response = await fetch(`${API_BASE_URL}/api/v1/database/stats`);
   if (!response.ok) {
-    throw new Error(`Failed to load database stats: ${response.statusText}`);
+    throw new Error(`Could not load database stats: ${response.statusText}`);
   }
   return response.json();
 }
@@ -195,7 +195,7 @@ export async function getDatabaseStats(): Promise<DatabaseStats> {
 export async function getDatabaseRecords(): Promise<DatabaseRecordsResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/database/records`);
   if (!response.ok) {
-    throw new Error(`Failed to load database records: ${response.statusText}`);
+    throw new Error(`Could not load database records: ${response.statusText}`);
   }
   return response.json();
 }
@@ -204,7 +204,7 @@ export function getDatabaseDownloadUrl(): string {
   return `${API_BASE_URL}/api/v1/database/download`;
 }
 
-/** Vybere nejnovější vyšetření, které je hotové; jinak vrátí `null`. */
+/** Newest examination that finished computing, or `null`. */
 export function latestReadyScan(scans: ScanRecord[] | undefined): ScanRecord | null {
   if (!scans || scans.length === 0) return null;
   const ready = scans.filter((scan) => scan.status === 'ready');

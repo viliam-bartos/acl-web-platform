@@ -2,88 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Two themes, one set of utility classes. `paper` is the surface ramp and
+ * `composite` is the ink ramp; in dark mode their values swap, so a class such
+ * as `bg-paper-50` stays "panel surface" and `text-composite-900` stays "ink"
+ * without touching any component.
+ *
+ * `--composite-950` is deliberately not inverted: it is only used as text on
+ * coloured badges (kraft, hazard), where dark text is correct in both themes.
+ */
 @layer base {
   :root {
-    --bg-main: #121416;
-    --color-composite: #1A1D20;
-    --color-paper: #F4EBD9;
-    --color-kraft: #C4A482;
-    --color-hazard: #F58220;
-    --color-cyan: #38B6FF;
+    --paper-50: #faf6ee;
+    --paper-100: #f4ebd9;
+    --paper-200: #e9dfcb;
+    --paper-300: #ddd0b6;
+    --paper-400: #c9b795;
+    --kraft-300: #d6bea2;
+    --kraft-400: #c4a482;
+    --kraft-500: #b89772;
+    --kraft-600: #9e7b56;
+    --kraft-700: #7d5f3f;
+    --composite-800: #2d3237;
+    --composite-850: #23272a;
+    --composite-900: #1a1d20;
+    --composite-950: #121416;
+    --hazard-400: #fa9238;
+    --hazard-500: #f58220;
+    --hazard-600: #e06d10;
+    --hazard-700: #c05608;
+    --cyan-400: #5ac3ff;
+    --cyan-500: #38b6ff;
+    --cyan-600: #0ea5e9;
+
+    --page: var(--paper-300);
+    --panel: var(--paper-50);
+    --panel-border: var(--paper-400);
+    --model-canvas: radial-gradient(circle at center, #faf7f0 0%, #f3e9d7 70%, #e6d9c0 100%);
+  }
+
+  .dark {
+    --paper-50: #1d2023;
+    --paper-100: #23272a;
+    --paper-200: #2b3034;
+    --paper-300: #121416;
+    --paper-400: #3b4249;
+    --kraft-600: #c9ac86;
+    --kraft-700: #dcc8a9;
+    --composite-800: #343a40;
+    --composite-850: #e6dfd2;
+    --composite-900: #f4ebd9;
+    --composite-950: #121416;
+
+    --page: var(--paper-300);
+    --panel: var(--paper-50);
+    --panel-border: var(--paper-400);
+    --model-canvas: radial-gradient(circle at center, #23272a 0%, #1a1d20 70%, #121416 100%);
   }
 
   body {
-    background-color: #F4EBD9;
-    color: #1A1D20;
+    background-color: var(--page);
+    color: var(--composite-900);
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Barlow Condensed', sans-serif;
     letter-spacing: 0.025em;
   }
 }
 
-/* Industrial Matte Panels */
 .panel-paper {
-  background-color: #F4EBD9;
-  border: 1px solid #E0D3BD;
-  color: #1A1D20;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  background-color: var(--panel);
+  border: 1px solid var(--panel-border);
+  color: var(--composite-900);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 }
 
-/* Technical Material Badges */
 .badge-kraft {
-  background-color: #C4A482;
-  color: #121416;
+  background-color: var(--kraft-400);
+  color: var(--composite-950);
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
 }
 
 .badge-paper {
-  background-color: #F4EBD9;
-  color: #1A1D20;
-  border: 1px solid #DFD3BD;
+  background-color: var(--panel);
+  color: var(--composite-900);
+  border: 1px solid var(--panel-border);
   font-family: 'JetBrains Mono', monospace;
 }
 
 .badge-hazard {
-  background-color: #F58220;
-  color: #121416;
+  background-color: var(--hazard-500);
+  color: var(--composite-950);
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
 }
 
 .badge-cyan {
-  background-color: #38B6FF;
-  color: #121416;
+  background-color: var(--cyan-500);
+  color: var(--composite-950);
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
 }
 
-/* 3D Model-viewer canvas styling (Off-white paper with vignette) */
 model-viewer {
   width: 100%;
   height: 100%;
   min-height: 380px;
-  background: radial-gradient(circle at center, #FAF7F0 0%, #F3E9D7 70%, #E6D9C0 100%);
+  background: var(--model-canvas);
   --poster-color: transparent;
   outline: none;
 }
 
-/* Technical Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F4EBD9;
+  background: var(--page);
 }
 ::-webkit-scrollbar-thumb {
-  background: #D5C5A8;
+  background: var(--paper-400);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9E7B56;
+  background: var(--kraft-500);
 }

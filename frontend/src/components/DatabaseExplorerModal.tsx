@@ -43,7 +43,7 @@ export default function DatabaseExplorerModal({
       setRecords(recordsData);
     } catch (err) {
       console.error('Failed to load database explorer data:', err);
-      setError('Nepodařilo se načíst data z databáze.');
+      setError('Could not load database records.');
     } finally {
       setIsLoading(false);
     }
@@ -86,21 +86,18 @@ export default function DatabaseExplorerModal({
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-paper-400 bg-paper-200">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-lg bg-paper-50 text-kraft-600 border border-paper-400">
+            <div className="p-2.5 rounded-lg bg-paper-100 text-kraft-600 border border-paper-400">
               <Database className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold font-display uppercase tracking-wider text-composite-900">
-                  Prohlížeč Databáze
+                  Database
                 </h2>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-paper-50 text-kraft-600 border border-paper-400 font-bold">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-paper-100 text-kraft-600 border border-paper-400 font-bold">
                   acl_platform.db
                 </span>
               </div>
-              <p className="text-xs text-kraft-700">
-                Přímý přístup k záznamům pacientů, vyšetření a geometrických metrik
-              </p>
             </div>
           </div>
 
@@ -108,7 +105,7 @@ export default function DatabaseExplorerModal({
             <button
               onClick={loadData}
               disabled={isLoading}
-              className="p-2 rounded-lg bg-paper-50 hover:bg-paper-200 text-composite-900 border border-paper-400 transition-colors"
+              className="p-2 rounded-lg bg-paper-100 hover:bg-paper-200 text-composite-900 border border-paper-400 transition-colors"
               title="Obnovit data"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-kraft-600' : ''}`} />
@@ -117,14 +114,14 @@ export default function DatabaseExplorerModal({
               href={getDatabaseDownloadUrl()}
               download="acl_platform.db"
               className="px-3.5 py-1.5 rounded-lg bg-hazard-500 hover:bg-hazard-600 text-composite-950 text-xs font-display uppercase tracking-wider font-bold flex items-center gap-1.5 transition-colors shadow-sm"
-              title="Stáhnout SQLite databázi"
+              title="Download SQLite database"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Stáhnout .db</span>
+              <span className="hidden sm:inline">Download .db</span>
             </a>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg bg-paper-50 hover:bg-paper-200 text-kraft-600 hover:text-white border border-paper-400 transition-colors"
+              className="p-2 rounded-lg bg-paper-100 hover:bg-paper-200 text-kraft-600 hover:text-white border border-paper-400 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -133,11 +130,11 @@ export default function DatabaseExplorerModal({
 
         {/* Database Quick Stats Bar */}
         {stats && (
-          <div className="grid grid-cols-3 gap-4 px-6 py-3 bg-paper-50 border-b border-paper-400 text-xs">
+          <div className="grid grid-cols-3 gap-4 px-6 py-3 bg-paper-100 border-b border-paper-400 text-xs">
             <div className="flex items-center space-x-2 font-mono">
               <Users className="w-4 h-4 text-kraft-600 flex-shrink-0" />
               <div>
-                <span className="text-kraft-600 block text-[11px] uppercase">Celkem pacientů:</span>
+                <span className="text-kraft-600 block text-[11px] uppercase">Patients</span>
                 <span className="font-mono font-bold text-kraft-600">{stats.total_patients}</span>
               </div>
             </div>
@@ -145,7 +142,7 @@ export default function DatabaseExplorerModal({
             <div className="flex items-center space-x-2 font-mono">
               <FileCheck className="w-4 h-4 text-cyan-600 flex-shrink-0" />
               <div>
-                <span className="text-kraft-600 block text-[11px] uppercase">Celkem MRI skenů:</span>
+                <span className="text-kraft-600 block text-[11px] uppercase">Examinations</span>
                 <span className="font-mono font-bold text-cyan-600">{stats.total_scans}</span>
               </div>
             </div>
@@ -153,7 +150,7 @@ export default function DatabaseExplorerModal({
             <div className="flex items-center space-x-2 font-mono">
               <Database className="w-4 h-4 text-kraft-700 flex-shrink-0" />
               <div className="truncate">
-                <span className="text-kraft-600 block text-[11px] uppercase">Úložiště databáze:</span>
+                <span className="text-kraft-600 block text-[11px] uppercase">Storage</span>
                 <span className="font-mono font-bold text-composite-900 truncate block">
                   SQLite (acl_platform.db)
                 </span>
@@ -165,7 +162,7 @@ export default function DatabaseExplorerModal({
         {/* Search & Tabs Controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-b border-paper-400 bg-paper-200">
           {/* Tabs */}
-          <div className="flex items-center space-x-2 bg-paper-50 p-1 rounded-lg border border-paper-400">
+          <div className="flex items-center space-x-2 bg-paper-100 p-1 rounded-lg border border-paper-400">
             <button
               onClick={() => setActiveTab('scans')}
               className={`px-3 py-1.5 rounded-md text-xs font-display uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
@@ -175,7 +172,7 @@ export default function DatabaseExplorerModal({
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              <span>Tabulka Skenů ({records.scans.length})</span>
+              <span>Examinations ({records.scans.length})</span>
             </button>
 
             <button
@@ -187,7 +184,7 @@ export default function DatabaseExplorerModal({
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>Tabulka Pacientů ({records.patients.length})</span>
+              <span>Patients ({records.patients.length})</span>
             </button>
           </div>
 
@@ -196,10 +193,10 @@ export default function DatabaseExplorerModal({
             <Search className="w-3.5 h-3.5 text-kraft-600 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Filtrovat podle ID, štěpu..."
+              placeholder="Filter by ID or graft..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-paper-50 border border-paper-400 rounded-lg text-xs text-composite-900 placeholder-paper-400/50 font-mono focus:outline-none focus:border-kraft-400 transition-colors"
+              className="w-full pl-9 pr-3 py-1.5 bg-paper-100 border border-paper-400 rounded-lg text-xs text-composite-900 placeholder-paper-400/50 font-mono focus:outline-none focus:border-kraft-400 transition-colors"
             />
           </div>
         </div>
@@ -216,12 +213,12 @@ export default function DatabaseExplorerModal({
             <div className="border border-paper-400 rounded-lg overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-paper-50 border-b border-paper-400 text-kraft-700 font-mono uppercase text-[11px]">
-                    <th className="py-2.5 px-3">ID Skenu</th>
-                    <th className="py-2.5 px-3">Pacient</th>
-                    <th className="py-2.5 px-3">Datum skenu</th>
-                    <th className="py-2.5 px-3">Měsíců post-op</th>
-                    <th className="py-2.5 px-3">Objem štěpu</th>
+                  <tr className="bg-paper-100 border-b border-paper-400 text-kraft-700 font-mono uppercase text-[11px]">
+                    <th className="py-2.5 px-3">Examination</th>
+                    <th className="py-2.5 px-3">Patient</th>
+                    <th className="py-2.5 px-3">Scan date</th>
+                    <th className="py-2.5 px-3">Months</th>
+                    <th className="py-2.5 px-3">Graft volume</th>
                     <th className="py-2.5 px-3">Stav</th>
                     <th className="py-2.5 px-3">3D Model</th>
                   </tr>
@@ -230,7 +227,7 @@ export default function DatabaseExplorerModal({
                   {filteredScans.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-6 text-center text-kraft-600 font-mono">
-                        Žádné záznamy vyšetření neodpovídají filtru.
+                        No examinations match the filter.
                       </td>
                     </tr>
                   ) : (
@@ -244,7 +241,7 @@ export default function DatabaseExplorerModal({
                               onClose();
                             }}
                             className="text-cyan-600 hover:underline hover:text-cyan-300 font-bold cursor-pointer"
-                            title="Vybrat tohoto pacienta v hlavní aplikaci"
+                            title="Select patient"
                           >
                             {s.patient_id}
                           </button>
@@ -260,17 +257,17 @@ export default function DatabaseExplorerModal({
                           <span
                             className={`px-2 py-0.5 rounded font-mono font-bold text-[11px] ${
                               s.status === 'ready'
-                                ? 'bg-paper-50 border border-emerald-500/40 text-emerald-300'
+                                ? 'bg-paper-100 border border-emerald-500/40 text-emerald-300'
                                 : s.status === 'pending'
-                                ? 'bg-paper-50 border border-amber-500/40 text-amber-300'
-                                : 'bg-paper-50 border border-rose-500/40 text-rose-300'
+                                ? 'bg-paper-100 border border-amber-500/40 text-amber-300'
+                                : 'bg-paper-100 border border-rose-500/40 text-rose-300'
                             }`}
                           >
-                            {s.status === 'ready' ? 'HOTOVO' : s.status === 'pending' ? 'BĚŽÍ' : 'SELHALO'}
+                            {s.status === 'ready' ? 'READY' : s.status === 'pending' ? 'RUNNING' : 'FAILED'}
                           </span>
                           {s.is_demo && (
-                            <span className="ml-1.5 px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-paper-50 border border-hazard-500/40 text-hazard-600">
-                              UKÁZKA
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-paper-100 border border-hazard-500/40 text-hazard-600">
+                              DEMO
                             </span>
                           )}
                         </td>
@@ -290,11 +287,11 @@ export default function DatabaseExplorerModal({
             <div className="border border-paper-400 rounded-lg overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-paper-50 border-b border-paper-400 text-kraft-700 font-mono uppercase text-[11px]">
-                    <th className="py-2.5 px-3">ID Pacienta</th>
-                    <th className="py-2.5 px-3">Datum operace</th>
-                    <th className="py-2.5 px-3">Typ štěpu (Graft Type)</th>
-                    <th className="py-2.5 px-3">Počet skenů</th>
+                  <tr className="bg-paper-100 border-b border-paper-400 text-kraft-700 font-mono uppercase text-[11px]">
+                    <th className="py-2.5 px-3">Patient</th>
+                    <th className="py-2.5 px-3">Surgery date</th>
+                    <th className="py-2.5 px-3">Graft type</th>
+                    <th className="py-2.5 px-3">Examinations</th>
                     <th className="py-2.5 px-3 text-right">Akce</th>
                   </tr>
                 </thead>
@@ -302,7 +299,7 @@ export default function DatabaseExplorerModal({
                   {filteredPatients.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-6 text-center text-kraft-600 font-mono">
-                        Žádní pacienti neodpovídají filtru.
+                        No patients match the filter.
                       </td>
                     </tr>
                   ) : (
@@ -318,9 +315,9 @@ export default function DatabaseExplorerModal({
                               onSelectPatient(p.patient_id);
                               onClose();
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-paper-50 hover:bg-paper-200 text-kraft-600 border border-kraft-400/40 font-mono text-[11px] transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-paper-100 hover:bg-paper-200 text-kraft-600 border border-kraft-400/40 font-mono text-[11px] transition-colors cursor-pointer"
                           >
-                            Otevřít profil
+                            Open
                           </button>
                         </td>
                       </tr>
@@ -333,7 +330,7 @@ export default function DatabaseExplorerModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-paper-400 bg-paper-50 flex flex-wrap items-center justify-between text-xs text-kraft-600 font-mono gap-2">
+        <div className="px-6 py-3 border-t border-paper-400 bg-paper-100 flex flex-wrap items-center justify-between text-xs text-kraft-600 font-mono gap-2">
           <div className="flex items-center gap-2">
             <Database className="w-3.5 h-3.5 text-kraft-600" />
             <span>
@@ -342,7 +339,7 @@ export default function DatabaseExplorerModal({
             </span>
           </div>
           <span className="text-[11px] text-kraft-600">
-            Lze otevřít také v bezplatném programu DB Browser for SQLite
+            Open with DB Browser for SQLite
           </span>
         </div>
       </div>
