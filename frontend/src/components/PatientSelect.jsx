@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Plus, RefreshCw, Calendar, Dna, Shield } from 'lucide-react';
+import { UserCheck, Plus, RefreshCw, Calendar, Dna } from 'lucide-react';
 
 export default function PatientSelect({
   patients,
@@ -47,12 +47,9 @@ export default function PatientSelect({
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
-              Anonymized Cohort
-              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1">
-                <Shield className="w-3 h-3 text-teal-400" /> Zero PII
-              </span>
+              Seznam Pacientů
             </h2>
-            <p className="text-xs text-slate-400">Select pseudoanonymized subject ID to review remodeling trajectory</p>
+            <p className="text-xs text-slate-400">Výběr ID pacienta pro zobrazení průběhu hojení a vyšetření</p>
           </div>
         </div>
 
@@ -140,9 +137,9 @@ export default function PatientSelect({
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="glass-panel-glow bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-teal-500/30">
-            <h3 className="text-lg font-bold text-white mb-2">Register Anonymized Subject</h3>
+            <h3 className="text-lg font-bold text-white mb-2">Registrace nového pacienta</h3>
             <p className="text-xs text-slate-400 mb-4">
-              Enter pseudoanonymized research ID. Strictly refrain from inputting patient names or identifying codes.
+              Zadejte ID pacienta (např. ACL_105) a datum operace plastiky vazu.
             </p>
 
             {errorMsg && (

@@ -11,12 +11,14 @@ import {
   CheckCircle,
   AlertCircle,
   Compass,
-  Maximize
+  Maximize,
+  Database
 } from 'lucide-react';
 import PatientSelect from './components/PatientSelect';
 import FileUpload from './components/FileUpload';
 import MeshViewer from './components/MeshViewer';
 import TrendChart from './components/TrendChart';
+import DatabaseExplorerModal from './components/DatabaseExplorerModal';
 import {
   getPatients,
   getPatientHistory,
@@ -34,6 +36,8 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingCohort, setIsLoadingCohort] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
+  const [isDatabaseOpen, setIsDatabaseOpen] = useState(false);
+  const [isExpansive3D, setIsExpansive3D] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = 'success') => {
@@ -109,7 +113,7 @@ export default function App() {
     try {
       const res = await analyzeReferenceScan(patientId, monthsPostOp);
       setLatestAnalysis(res.radiomics_summary);
-      showToast(`Reference Case 074 evaluated! Real PyVista surface & geometric metrics loaded.`);
+      showToast(`Referenční vyšetření (Case 074) načteno.`);
       await loadPatients(patientId);
       await loadHistory(patientId);
       setSelectedScan(res.scan);
@@ -123,7 +127,7 @@ export default function App() {
 
   const handleCreatePatient = async (patientData) => {
     const res = await createPatient(patientData);
-    showToast(`Registered anonymized subject ${res.patient_id}`);
+    showToast(`Registrován pacient ${res.patient_id}`);
     await loadPatients(res.patient_id);
   };
 
@@ -141,7 +145,7 @@ export default function App() {
                 ACL Web Platform
               </h1>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">
-                v1.0 • PyVista & 3D UNet
+                v1.0
               </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
@@ -150,18 +154,22 @@ export default function App() {
           </div>
         </div>
 
-        {/* Status Indicators & Privacy Badge */}
-        <div className="flex items-center space-x-3 text-xs">
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-300">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="font-medium">Pseudoanonymized</span>
-          </div>
+        {/* Status Indicators & Database Button */}
+        <div className="flex items-center space-x-2 sm:space-x-3 text-xs">
+          <button
+            onClick={() => setIsDatabaseOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-teal-300 transition-colors shadow-sm"
+            title="Otevřít Prohlížeč Databáze"
+          >
+            <Database className="w-4 h-4 text-teal-400" />
+            <span className="font-semibold">Databáze</span>
+          </button>
 
           <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80">
             <span className={`w-2.5 h-2.5 rounded-full ${backendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
-            <span className="text-slate-300 hidden md:inline">Backend:</span>
+            <span className="text-slate-300 hidden md:inline">Server:</span>
             <span className={backendOnline ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}>
-              {backendOnline ? 'FastAPI Active' : 'Disconnected'}
+              {backendOnline ? 'Aktivní' : 'Odpojeno'}
             </span>
           </div>
         </div>
@@ -197,110 +205,222 @@ export default function App() {
           isLoading={isLoadingCohort}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 space-y-6">
-            <FileUpload
-              patientId={selectedPatientId}
-              onUploadSuccess={handleUploadScan}
-              onAnalyzeReference={handleAnalyzeReference}
-              isProcessing={isProcessing}
-            />
-
-            <TrendChart
-              scans={history?.scans || []}
-              selectedScanId={selectedScan?.id}
-              onSelectScan={(scan) => setSelectedScan(scan)}
-            />
-          </div>
-
-          <div className="lg:col-span-5 space-y-6">
+        {isExpansive3D ? (
+          /* Expansive 3D Studio Layout: Widescreen 3D Model on top */
+          <div className="space-y-6">
             <MeshViewer
               scan={selectedScan}
               patientId={selectedPatientId}
+              isExpansive={true}
+              onToggleExpansive={() => setIsExpansive3D(false)}
             />
 
-            {/* Geometric & Radiomic Quantitation Panel */}
-            {selectedScan && (
-              <div className="glass-panel rounded-2xl p-5">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                  <div className="flex items-center space-x-2.5">
-                    <Cpu className="w-4 h-4 text-teal-400" />
-                    <h3 className="text-sm font-semibold text-white">
-                      Anatomical & Radiomic Quantitation
-                    </h3>
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-500">
-                    anaknee suite
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-4 text-xs">
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">ACL Volume</span>
-                    <span className="font-mono text-base font-bold text-teal-300">
-                      {selectedScan.volume_mm3.toFixed(1)} <span className="text-xs text-slate-400 font-sans">mm³</span>
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Integrity Index</span>
-                    <span className="font-mono text-base font-bold text-amber-300">
-                      {selectedScan.integrity_score.toFixed(1)} <span className="text-xs text-slate-400 font-sans">%</span>
-                    </span>
-                  </div>
-
-                  {/* Real Geometric Descriptors from C:\ACL_analysis\ACL_graft_analysis */}
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Stäubli Tibial %</span>
-                    <span className="font-mono text-sm font-semibold text-slate-200">
-                      {latestAnalysis?.staubli_tibial_pct ? `${latestAnalysis.staubli_tibial_pct}%` : '32.6%'}
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Anterior Tibial Transl.</span>
-                    <span className="font-mono text-sm font-semibold text-slate-200">
-                      {latestAnalysis?.att_mm ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Blumensaat Length</span>
-                    <span className="font-mono text-sm font-semibold text-slate-200">
-                      {latestAnalysis?.bh_length_pct ? `${latestAnalysis.bh_length_pct}%` : '43.9%'}
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Intercondylar Notch W.</span>
-                    <span className="font-mono text-sm font-semibold text-slate-200">
-                      {latestAnalysis?.notch_width_mm ? `${latestAnalysis.notch_width_mm} mm` : '20.0 mm'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-4 p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-200 flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold block text-white">Ligamentization Maturation Assessment</span>
-                    <span>
-                      {selectedScan.integrity_score >= 80
-                        ? 'Mature collagen remodeling detected. High fiber density and structural integrity suitable for unrestricted sports load.'
-                        : selectedScan.integrity_score >= 65
-                        ? 'Active revascularization and cellular proliferation phase. Graft remodeling proceeding within expected clinical bounds.'
-                        : 'Early postoperative remodeling phase with characteristic temporary signal drop and biological graft incorporation.'}
-                    </span>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4">
+                <FileUpload
+                  patientId={selectedPatientId}
+                  onUploadSuccess={handleUploadScan}
+                  onAnalyzeReference={handleAnalyzeReference}
+                  isProcessing={isProcessing}
+                />
               </div>
-            )}
+
+              <div className="lg:col-span-4">
+                {selectedScan && (
+                  <div className="glass-panel rounded-2xl p-5 h-full flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <div className="flex items-center space-x-2.5">
+                          <Cpu className="w-4 h-4 text-teal-400" />
+                          <h3 className="text-sm font-semibold text-white">
+                            Anatomická & Radiomická Kvantifikace
+                          </h3>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-4 text-xs">
+                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                          <span className="text-slate-400 block text-[11px]">ACL Objem</span>
+                          <span className="font-mono text-base font-bold text-teal-300">
+                            {selectedScan.volume_mm3.toFixed(1)} <span className="text-xs text-slate-400 font-sans">mm³</span>
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                          <span className="text-slate-400 block text-[11px]">Index integrity</span>
+                          <span className="font-mono text-base font-bold text-amber-300">
+                            {selectedScan.integrity_score.toFixed(1)} <span className="text-xs text-slate-400 font-sans">%</span>
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                          <span className="text-slate-400 block text-[11px]">Stäubli Tibial %</span>
+                          <span className="font-mono text-sm font-semibold text-slate-200">
+                            {latestAnalysis?.staubli_tibial_pct ? `${latestAnalysis.staubli_tibial_pct}%` : '32.6%'}
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                          <span className="text-slate-400 block text-[11px]">Anterior Tibial Transl.</span>
+                          <span className="font-mono text-sm font-semibold text-slate-200">
+                            {latestAnalysis?.att_mm ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                          <span className="text-slate-400 block text-[11px]">Blumensaat Délka</span>
+                          <span className="font-mono text-sm font-semibold text-slate-200">
+                            {latestAnalysis?.bh_length_pct ? `${latestAnalysis.bh_length_pct}%` : '43.9%'}
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                          <span className="text-slate-400 block text-[11px]">Šířka fosse</span>
+                          <span className="font-mono text-sm font-semibold text-slate-200">
+                            {latestAnalysis?.notch_width_mm ? `${latestAnalysis.notch_width_mm} mm` : '20.0 mm'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-200 flex items-start gap-2.5">
+                      <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-[11px]">
+                        <span className="font-semibold block text-white">Status hojení štěpu</span>
+                        <span>
+                          {selectedScan.integrity_score >= 80
+                            ? 'Pokročilá ligamentizace s vysokou denzitou kolagenu vhodná pro plné sportovní zatížení.'
+                            : selectedScan.integrity_score >= 65
+                            ? 'Probíhá aktivní revaskularizace a buněčná proliferace. Hojení odpovídá pooperačnímu období.'
+                            : 'Časná pooperační fáze biologické inkorporace štěpu v kostních tunelech.'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:col-span-4">
+                <TrendChart
+                  scans={history?.scans || []}
+                  selectedScanId={selectedScan?.id}
+                  onSelectScan={(scan) => setSelectedScan(scan)}
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Standard Split Layout: Prominent 3D viewer on right, Upload + Trend on left */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-5 space-y-6">
+              <FileUpload
+                patientId={selectedPatientId}
+                onUploadSuccess={handleUploadScan}
+                onAnalyzeReference={handleAnalyzeReference}
+                isProcessing={isProcessing}
+              />
+
+              <TrendChart
+                scans={history?.scans || []}
+                selectedScanId={selectedScan?.id}
+                onSelectScan={(scan) => setSelectedScan(scan)}
+              />
+            </div>
+
+            <div className="lg:col-span-7 space-y-6">
+              <MeshViewer
+                scan={selectedScan}
+                patientId={selectedPatientId}
+                isExpansive={false}
+                onToggleExpansive={() => setIsExpansive3D(true)}
+              />
+
+              {/* Geometric & Radiomic Quantitation Panel */}
+              {selectedScan && (
+                <div className="glass-panel rounded-2xl p-5">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div className="flex items-center space-x-2.5">
+                      <Cpu className="w-4 h-4 text-teal-400" />
+                      <h3 className="text-sm font-semibold text-white">
+                        Anatomická & Radiomická Kvantifikace
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block text-[11px]">ACL Objem</span>
+                      <span className="font-mono text-base font-bold text-teal-300">
+                        {selectedScan.volume_mm3.toFixed(1)} <span className="text-xs text-slate-400 font-sans">mm³</span>
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block text-[11px]">Integrita vazu</span>
+                      <span className="font-mono text-base font-bold text-amber-300">
+                        {selectedScan.integrity_score.toFixed(1)} <span className="text-xs text-slate-400 font-sans">%</span>
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block text-[11px]">Stäubli Tibial %</span>
+                      <span className="font-mono text-sm font-semibold text-slate-200">
+                        {latestAnalysis?.staubli_tibial_pct ? `${latestAnalysis.staubli_tibial_pct}%` : '32.6%'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block text-[11px]">Anterior Tibial Transl.</span>
+                      <span className="font-mono text-sm font-semibold text-slate-200">
+                        {latestAnalysis?.att_mm ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block text-[11px]">Blumensaat Délka</span>
+                      <span className="font-mono text-sm font-semibold text-slate-200">
+                        {latestAnalysis?.bh_length_pct ? `${latestAnalysis.bh_length_pct}%` : '43.9%'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-slate-400 block text-[11px]">Šířka fosse</span>
+                      <span className="font-mono text-sm font-semibold text-slate-200">
+                        {latestAnalysis?.notch_width_mm ? `${latestAnalysis.notch_width_mm} mm` : '20.0 mm'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-200 flex items-start gap-2.5">
+                    <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold block text-white">Status hojení štěpu</span>
+                      <span>
+                        {selectedScan.integrity_score >= 80
+                          ? 'Pokročilá ligamentizace s vysokou denzitou kolagenu vhodná pro plné sportovní zatížení.'
+                          : selectedScan.integrity_score >= 65
+                          ? 'Probíhá aktivní revaskularizace a buněčná proliferace. Hojení odpovídá pooperačnímu období.'
+                          : 'Časná pooperační fáze biologické inkorporace štěpu v kostních tunelech.'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* Database Explorer Modal */}
+      <DatabaseExplorerModal
+        isOpen={isDatabaseOpen}
+        onClose={() => setIsDatabaseOpen(false)}
+        onSelectPatient={(id) => setSelectedPatientId(id)}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 px-4 sm:px-8 py-4 text-center text-xs text-slate-400">
-        <p>ACL Web Platform • Connected to C:\ACL_analysis\ACL_graft_analysis (LightUNet3D + PyVista + anaknee) • Strict Zero-PII Policy</p>
+        <p>ACL Web Platform • Systém pro analýzu a 3D vizualizaci rekonstrukce předního zkříženého vazu</p>
       </footer>
     </div>
   );

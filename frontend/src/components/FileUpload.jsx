@@ -87,10 +87,10 @@ export default function FileUpload({
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
-              Upload MRI Examination
+              Nahrání MRI Vyšetření
             </h2>
             <p className="text-xs text-slate-400">
-              3D LightUNet segmentation, PyRadiomics textural extraction & PyVista 3D meshing
+              Segmentace struktur kolenního kloubu a geometrická analýza štěpu
             </p>
           </div>
         </div>
@@ -101,10 +101,10 @@ export default function FileUpload({
           onClick={handleQuickReference}
           disabled={isProcessing}
           className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all shadow-sm disabled:opacity-50"
-          title="Analyze reference MRI volume right_case_074.nii.gz from C:\ACL_analysis\ACL_graft_analysis"
+          title="Načíst referenční MRI data (Case 074)"
         >
           <Database className="w-3.5 h-3.5 text-amber-400" />
-          <span>⚡ Load Reference MRI (Case 074)</span>
+          <span>⚡ Načíst referenční MRI (Case 074)</span>
         </button>
       </div>
 
@@ -207,12 +207,12 @@ export default function FileUpload({
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Running 3D Segment & PyVista Meshing...</span>
+                <span>Probíhá zpracování a 3D rekonstrukce...</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>Execute 3D Remodeling Pipeline</span>
+                <span>Spustit 3D Analýzu</span>
               </>
             )}
           </button>

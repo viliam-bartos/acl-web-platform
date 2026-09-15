@@ -85,3 +85,24 @@ export async function createPatient(patientData) {
 
   return response.json();
 }
+
+export async function getDatabaseStats() {
+  const response = await fetch(`${API_BASE_URL}/api/v1/database/stats`);
+  if (!response.ok) {
+    throw new Error(`Failed to load database stats: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function getDatabaseRecords() {
+  const response = await fetch(`${API_BASE_URL}/api/v1/database/records`);
+  if (!response.ok) {
+    throw new Error(`Failed to load database records: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export function getDatabaseDownloadUrl() {
+  return `${API_BASE_URL}/api/v1/database/download`;
+}
+
