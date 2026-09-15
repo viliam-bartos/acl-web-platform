@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Activity,
-  ShieldCheck,
-  Server,
-  Layers,
-  Sparkles,
-  HelpCircle,
-  FileSpreadsheet,
   Cpu,
   CheckCircle,
   AlertCircle,
-  Compass,
-  Maximize,
-  Database
+  Sparkles,
+  Database,
 } from 'lucide-react';
 import PatientSelect from './components/PatientSelect';
 import FileUpload from './components/FileUpload';
@@ -24,28 +17,40 @@ import {
   getPatientHistory,
   analyzeScan,
   analyzeReferenceScan,
-  createPatient
+  createPatient,
 } from './services/api';
+import {
+  Patient,
+  PatientCreateData,
+  PatientHistory,
+  RadiomicsSummary,
+  ScanRecord,
+} from './types';
+
+interface ToastState {
+  message: string;
+  type: 'success' | 'error';
+}
 
 export default function App() {
-  const [patients, setPatients] = useState([]);
-  const [selectedPatientId, setSelectedPatientId] = useState('ACL_042');
-  const [history, setHistory] = useState(null);
-  const [selectedScan, setSelectedScan] = useState(null);
-  const [latestAnalysis, setLatestAnalysis] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoadingCohort, setIsLoadingCohort] = useState(false);
-  const [backendOnline, setBackendOnline] = useState(true);
-  const [isDatabaseOpen, setIsDatabaseOpen] = useState(false);
-  const [isExpansive3D, setIsExpansive3D] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('ACL_042');
+  const [history, setHistory] = useState<PatientHistory | null>(null);
+  const [selectedScan, setSelectedScan] = useState<ScanRecord | null>(null);
+  const [latestAnalysis, setLatestAnalysis] = useState<RadiomicsSummary | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isLoadingCohort, setIsLoadingCohort] = useState<boolean>(false);
+  const [backendOnline, setBackendOnline] = useState<boolean>(true);
+  const [isDatabaseOpen, setIsDatabaseOpen] = useState<boolean>(false);
+  const [isExpansive3D, setIsExpansive3D] = useState<boolean>(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
-  const showToast = (message, type = 'success') => {
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 5000);
   };
 
-  const loadPatients = async (preferredId = null) => {
+  const loadPatients = async (preferredId: string | null = null) => {
     setIsLoadingCohort(true);
     try {
       const data = await getPatients();
@@ -64,7 +69,7 @@ export default function App() {
     }
   };
 
-  const loadHistory = async (patientId) => {
+  const loadHistory = async (patientId: string) => {
     if (!patientId) return;
     try {
       const data = await getPatientHistory(patientId);
@@ -91,7 +96,7 @@ export default function App() {
     }
   }, [selectedPatientId]);
 
-  const handleUploadScan = async (patientId, monthsPostOp, file) => {
+  const handleUploadScan = async (patientId: string, monthsPostOp: number, file: File) => {
     setIsProcessing(true);
     try {
       const res = await analyzeScan(patientId, monthsPostOp, file);
@@ -101,14 +106,14 @@ export default function App() {
       await loadHistory(patientId);
       setSelectedScan(res.scan);
     } catch (err) {
-      showToast(err.message || 'Error processing MRI scan', 'error');
+      showToast(err instanceof Error ? err.message : 'Error processing MRI scan', 'error');
       throw err;
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleAnalyzeReference = async (patientId, monthsPostOp) => {
+  const handleAnalyzeReference = async (patientId: string, monthsPostOp: number) => {
     setIsProcessing(true);
     try {
       const res = await analyzeReferenceScan(patientId, monthsPostOp);
@@ -118,14 +123,14 @@ export default function App() {
       await loadHistory(patientId);
       setSelectedScan(res.scan);
     } catch (err) {
-      showToast(err.message || 'Error evaluating reference scan', 'error');
+      showToast(err instanceof Error ? err.message : 'Error evaluating reference scan', 'error');
       throw err;
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleCreatePatient = async (patientData) => {
+  const handleCreatePatient = async (patientData: PatientCreateData) => {
     const res = await createPatient(patientData);
     showToast(`Registrován pacient ${res.patient_id}`);
     await loadPatients(res.patient_id);
@@ -158,7 +163,7 @@ export default function App() {
         <div className="flex items-center space-x-2 sm:space-x-3 text-xs">
           <button
             onClick={() => setIsDatabaseOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-teal-300 transition-colors shadow-sm"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-teal-300 transition-colors shadow-sm cursor-pointer"
             title="Otevřít Prohlížeč Databáze"
           >
             <Database className="w-4 h-4 text-teal-400" />
@@ -166,7 +171,11 @@ export default function App() {
           </button>
 
           <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80">
-            <span className={`w-2.5 h-2.5 rounded-full ${backendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                backendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+              }`}
+            />
             <span className="text-slate-300 hidden md:inline">Server:</span>
             <span className={backendOnline ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}>
               {backendOnline ? 'Aktivní' : 'Odpojeno'}
@@ -178,18 +187,24 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         {toast && (
-          <div className={`mb-6 p-4 rounded-2xl flex items-center justify-between border shadow-lg transition-all ${
-            toast.type === 'error'
-              ? 'bg-rose-500/20 border-rose-500/40 text-rose-200'
-              : 'bg-teal-500/20 border-teal-500/40 text-teal-200'
-          }`}>
+          <div
+            className={`mb-6 p-4 rounded-2xl flex items-center justify-between border shadow-lg transition-all ${
+              toast.type === 'error'
+                ? 'bg-rose-500/20 border-rose-500/40 text-rose-200'
+                : 'bg-teal-500/20 border-teal-500/40 text-teal-200'
+            }`}
+          >
             <div className="flex items-center space-x-3 text-sm">
-              {toast.type === 'error' ? <AlertCircle className="w-5 h-5 flex-shrink-0" /> : <CheckCircle className="w-5 h-5 flex-shrink-0" />}
+              {toast.type === 'error' ? (
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              ) : (
+                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+              )}
               <span>{toast.message}</span>
             </div>
             <button
               onClick={() => setToast(null)}
-              className="text-xs opacity-70 hover:opacity-100 px-2 py-1"
+              className="text-xs opacity-70 hover:opacity-100 px-2 py-1 cursor-pointer"
             >
               ✕
             </button>
@@ -242,42 +257,50 @@ export default function App() {
                         <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                           <span className="text-slate-400 block text-[11px]">ACL Objem</span>
                           <span className="font-mono text-base font-bold text-teal-300">
-                            {selectedScan.volume_mm3.toFixed(1)} <span className="text-xs text-slate-400 font-sans">mm³</span>
+                            {selectedScan.volume_mm3.toFixed(1)}{' '}
+                            <span className="text-xs text-slate-400 font-sans">mm³</span>
                           </span>
                         </div>
 
                         <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                           <span className="text-slate-400 block text-[11px]">Index integrity</span>
                           <span className="font-mono text-base font-bold text-amber-300">
-                            {selectedScan.integrity_score.toFixed(1)} <span className="text-xs text-slate-400 font-sans">%</span>
+                            {selectedScan.integrity_score.toFixed(1)}{' '}
+                            <span className="text-xs text-slate-400 font-sans">%</span>
                           </span>
                         </div>
 
                         <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                           <span className="text-slate-400 block text-[11px]">Stäubli Tibial %</span>
                           <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.staubli_tibial_pct ? `${latestAnalysis.staubli_tibial_pct}%` : '32.6%'}
+                            {latestAnalysis?.staubli_tibial_pct != null
+                              ? `${latestAnalysis.staubli_tibial_pct}%`
+                              : '32.6%'}
                           </span>
                         </div>
 
                         <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                           <span className="text-slate-400 block text-[11px]">Anterior Tibial Transl.</span>
                           <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.att_mm ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
+                            {latestAnalysis?.att_mm != null ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
                           </span>
                         </div>
 
                         <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                           <span className="text-slate-400 block text-[11px]">Blumensaat Délka</span>
                           <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.bh_length_pct ? `${latestAnalysis.bh_length_pct}%` : '43.9%'}
+                            {latestAnalysis?.bh_length_pct != null
+                              ? `${latestAnalysis.bh_length_pct}%`
+                              : '43.9%'}
                           </span>
                         </div>
 
                         <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                           <span className="text-slate-400 block text-[11px]">Šířka fosse</span>
                           <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.notch_width_mm ? `${latestAnalysis.notch_width_mm} mm` : '20.0 mm'}
+                            {latestAnalysis?.notch_width_mm != null
+                              ? `${latestAnalysis.notch_width_mm} mm`
+                              : '20.0 mm'}
                           </span>
                         </div>
                       </div>
@@ -351,42 +374,50 @@ export default function App() {
                     <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                       <span className="text-slate-400 block text-[11px]">ACL Objem</span>
                       <span className="font-mono text-base font-bold text-teal-300">
-                        {selectedScan.volume_mm3.toFixed(1)} <span className="text-xs text-slate-400 font-sans">mm³</span>
+                        {selectedScan.volume_mm3.toFixed(1)}{' '}
+                        <span className="text-xs text-slate-400 font-sans">mm³</span>
                       </span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                       <span className="text-slate-400 block text-[11px]">Integrita vazu</span>
                       <span className="font-mono text-base font-bold text-amber-300">
-                        {selectedScan.integrity_score.toFixed(1)} <span className="text-xs text-slate-400 font-sans">%</span>
+                        {selectedScan.integrity_score.toFixed(1)}{' '}
+                        <span className="text-xs text-slate-400 font-sans">%</span>
                       </span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                       <span className="text-slate-400 block text-[11px]">Stäubli Tibial %</span>
                       <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.staubli_tibial_pct ? `${latestAnalysis.staubli_tibial_pct}%` : '32.6%'}
+                        {latestAnalysis?.staubli_tibial_pct != null
+                          ? `${latestAnalysis.staubli_tibial_pct}%`
+                          : '32.6%'}
                       </span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                       <span className="text-slate-400 block text-[11px]">Anterior Tibial Transl.</span>
                       <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.att_mm ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
+                        {latestAnalysis?.att_mm != null ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
                       </span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                       <span className="text-slate-400 block text-[11px]">Blumensaat Délka</span>
                       <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.bh_length_pct ? `${latestAnalysis.bh_length_pct}%` : '43.9%'}
+                        {latestAnalysis?.bh_length_pct != null
+                          ? `${latestAnalysis.bh_length_pct}%`
+                          : '43.9%'}
                       </span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                       <span className="text-slate-400 block text-[11px]">Šířka fosse</span>
                       <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.notch_width_mm ? `${latestAnalysis.notch_width_mm} mm` : '20.0 mm'}
+                        {latestAnalysis?.notch_width_mm != null
+                          ? `${latestAnalysis.notch_width_mm} mm`
+                          : '20.0 mm'}
                       </span>
                     </div>
                   </div>

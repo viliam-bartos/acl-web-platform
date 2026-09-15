@@ -33,6 +33,38 @@ interface CustomTooltipProps {
   label?: string | number;
 }
 
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="glass-panel-glow bg-slate-900/95 p-3.5 rounded-xl border border-teal-500/30 text-xs space-y-1.5 shadow-xl">
+        <div className="font-semibold text-teal-300 flex items-center justify-between gap-4 border-b border-slate-800 pb-1.5">
+          <span>{label} Months Post-Op</span>
+          <span className="text-slate-400 font-mono text-[11px]">{data.scan_date}</span>
+        </div>
+        <div className="flex items-center justify-between gap-6 text-slate-300">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+            Integrity Score:
+          </span>
+          <span className="font-mono font-bold text-amber-300">{data.integrity}%</span>
+        </div>
+        <div className="flex items-center justify-between gap-6 text-slate-300">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-400 inline-block"></span>
+            Volume:
+          </span>
+          <span className="font-mono font-bold text-teal-300">{data.volume} mm³</span>
+        </div>
+        <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800 text-center">
+          Click data point to load 3D mesh
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function TrendChart({
   scans = [],
   selectedScanId,
@@ -57,38 +89,6 @@ export default function TrendChart({
     scan_date: s.scan_date,
     raw: s,
   }));
-
-  const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="glass-panel-glow bg-slate-900/95 p-3.5 rounded-xl border border-teal-500/30 text-xs space-y-1.5 shadow-xl">
-          <div className="font-semibold text-teal-300 flex items-center justify-between gap-4 border-b border-slate-800 pb-1.5">
-            <span>{label} Months Post-Op</span>
-            <span className="text-slate-400 font-mono text-[11px]">{data.scan_date}</span>
-          </div>
-          <div className="flex items-center justify-between gap-6 text-slate-300">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
-              Integrity Score:
-            </span>
-            <span className="font-mono font-bold text-amber-300">{data.integrity}%</span>
-          </div>
-          <div className="flex items-center justify-between gap-6 text-slate-300">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-400 inline-block"></span>
-              Volume:
-            </span>
-            <span className="font-mono font-bold text-teal-300">{data.volume} mm³</span>
-          </div>
-          <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800 text-center">
-            Click data point to load 3D mesh
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="glass-panel rounded-2xl p-5 mb-6">

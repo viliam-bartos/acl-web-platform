@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   RotateCw,
@@ -51,7 +51,7 @@ export default function MeshViewer({
   const modelViewerRef = useRef<ModelViewerElement | null>(null);
 
   // Apply material opacity / visibility dynamically in model-viewer
-  const applyLayerVisibilities = (currentLayers: LayerState = layers) => {
+  const applyLayerVisibilities = useCallback((currentLayers: LayerState = layers) => {
     if (!modelViewerRef.current || !modelViewerRef.current.model) return;
     const model = modelViewerRef.current.model;
     const materials = model.materials || [];
@@ -98,7 +98,7 @@ export default function MeshViewer({
         ]);
       }
     });
-  };
+  }, [layers]);
 
   const toggleLayer = (layerKey: keyof LayerState) => {
     setLayers((prev) => {
@@ -119,7 +119,7 @@ export default function MeshViewer({
 
     viewer.addEventListener('load', handleLoad);
     return () => viewer.removeEventListener('load', handleLoad);
-  }, [scan?.model_url, layers]);
+  }, [scan?.model_url, layers, applyLayerVisibilities]);
 
   // Fullscreen Esc key handler
   useEffect(() => {
