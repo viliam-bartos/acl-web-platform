@@ -298,6 +298,13 @@ export default function App() {
           isLoading={isLoadingCohort}
         />
 
+        <FileUpload
+          patientId={selectedPatientId}
+          onUploadSuccess={handleUploadScan}
+          onAnalyzeReference={handleAnalyzeReference}
+          isProcessing={isProcessing}
+        />
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-7">
             <MeshViewer scan={selectedScan} patientId={selectedPatientId} />
@@ -305,24 +312,14 @@ export default function App() {
           <div className="lg:col-span-5">
             {selectedScan && <QuantificationCard scan={selectedScan} />}
           </div>
-
-          <div className="lg:col-span-8">
-            <TrendChart
-              scans={history?.scans || []}
-              selectedScanId={selectedScan?.id}
-              onSelectScan={(scan) => setSelectedScan(scan)}
-              theme={theme}
-            />
-          </div>
-          <div className="lg:col-span-4">
-            <FileUpload
-              patientId={selectedPatientId}
-              onUploadSuccess={handleUploadScan}
-              onAnalyzeReference={handleAnalyzeReference}
-              isProcessing={isProcessing}
-            />
-          </div>
         </div>
+
+        <TrendChart
+          scans={history?.scans || []}
+          selectedScanId={selectedScan?.id}
+          onSelectScan={(scan) => setSelectedScan(scan)}
+          theme={theme}
+        />
       </main>
 
       <DatabaseExplorerModal

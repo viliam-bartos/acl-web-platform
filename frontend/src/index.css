@@ -8,16 +8,19 @@
  * as `bg-paper-50` stays "panel surface" and `text-composite-900` stays "ink"
  * without touching any component.
  *
+ * The page sits on `paper-300`, one step below the panels, so windows read as
+ * raised surfaces in both themes.
+ *
  * `--composite-950` is deliberately not inverted: it is only used as text on
  * coloured badges (kraft, hazard), where dark text is correct in both themes.
  */
 @layer base {
   :root {
     --paper-50: #faf6ee;
-    --paper-100: #f4ebd9;
-    --paper-200: #e9dfcb;
-    --paper-300: #ddd0b6;
-    --paper-400: #c9b795;
+    --paper-100: #f2e9d8;
+    --paper-200: #e9dfc9;
+    --paper-300: #e2d7c0;
+    --paper-400: #c6b596;
     --kraft-300: #d6bea2;
     --kraft-400: #c4a482;
     --kraft-500: #b89772;
@@ -33,7 +36,7 @@
     --hazard-700: #c05608;
     --cyan-400: #5ac3ff;
     --cyan-500: #38b6ff;
-    --cyan-600: #0ea5e9;
+    --cyan-600: #0e7fb8;
 
     --page: var(--paper-300);
     --panel: var(--paper-50);
@@ -53,6 +56,7 @@
     --composite-850: #e6dfd2;
     --composite-900: #f4ebd9;
     --composite-950: #121416;
+    --cyan-600: #38b6ff;
 
     --page: var(--paper-300);
     --panel: var(--paper-50);
