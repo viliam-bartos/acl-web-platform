@@ -1,19 +1,26 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, FileCheck, AlertCircle, Loader2, Sparkles, Layers, Database } from 'lucide-react';
 
+interface FileUploadProps {
+  patientId: string;
+  onUploadSuccess: (patientId: string, monthsPostOp: number, file: File) => Promise<unknown>;
+  onAnalyzeReference: (patientId: string, monthsPostOp: number) => Promise<unknown>;
+  isProcessing: boolean;
+}
+
 export default function FileUpload({
   patientId,
   onUploadSuccess,
   onAnalyzeReference,
-  isProcessing
-}) {
+  isProcessing,
+}: FileUploadProps) {
   const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [monthsPostOp, setMonthsPostOp] = useState('6.0');
   const [errorMsg, setErrorMsg] = useState('');
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleDrag = (e) => {
+  const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -23,7 +30,7 @@ export default function FileUpload({
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -32,19 +39,19 @@ export default function FileUpload({
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (e.target.files && e.target.files[0]) {
       validateAndSetFile(e.target.files[0]);
     }
   };
 
-  const validateAndSetFile = (file) => {
+  const validateAndSetFile = (file: File) => {
     setErrorMsg('');
     setSelectedFile(file);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
       setErrorMsg('Please select or drop an MRI scan file (DICOM / NIfTI).');
@@ -61,7 +68,7 @@ export default function FileUpload({
       setSelectedFile(null);
       if (inputRef.current) inputRef.current.value = '';
     } catch (err) {
-      setErrorMsg(err.message || 'Upload and 3D reconstruction failed.');
+      setErrorMsg(err instanceof Error ? err.message : 'Upload and 3D reconstruction failed.');
     }
   };
 
@@ -74,7 +81,7 @@ export default function FileUpload({
       setErrorMsg('');
       await onAnalyzeReference(patientId, parseFloat(monthsPostOp) || 6.0);
     } catch (err) {
-      setErrorMsg(err.message || 'Reference scan evaluation failed.');
+      setErrorMsg(err instanceof Error ? err.message : 'Reference scan evaluation failed.');
     }
   };
 

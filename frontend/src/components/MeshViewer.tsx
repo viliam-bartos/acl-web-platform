@@ -6,39 +6,52 @@ import {
   Minimize2,
   RefreshCw,
   Eye,
-  Activity,
   Info,
   Layers,
-  Compass,
-  Check
 } from 'lucide-react';
 import { resolveModelUrl } from '../services/api';
+import { ScanRecord } from '../types';
+
+interface MeshViewerProps {
+  scan: ScanRecord | null;
+  patientId: string;
+  isExpansive?: boolean;
+  onToggleExpansive?: (() => void) | null;
+}
+
+interface LayerState {
+  femur: boolean;
+  tibia: boolean;
+  acl: boolean;
+  plateau: boolean;
+  grid: boolean;
+}
 
 export default function MeshViewer({
   scan,
   patientId,
   isExpansive = false,
-  onToggleExpansive = null
-}) {
+  onToggleExpansive = null,
+}: MeshViewerProps) {
   const [autoRotate, setAutoRotate] = useState(false);
-  const [exposure, setExposure] = useState('1.1');
+  const [exposure] = useState('1.1');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activePreset, setActivePreset] = useState('anterior');
-  
+  const [activePreset, setActivePreset] = useState<'anterior' | 'sagittal' | 'axial' | 'oblique'>('anterior');
+
   // Layer visibility toggles matching C:\ACL_analysis\ACL_graft_analysis
-  const [layers, setLayers] = useState({
+  const [layers, setLayers] = useState<LayerState>({
     femur: true,
     tibia: true,
     acl: true,
     plateau: true,
-    grid: true
+    grid: true,
   });
 
-  const containerRef = useRef(null);
-  const modelViewerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const modelViewerRef = useRef<ModelViewerElement | null>(null);
 
   // Apply material opacity / visibility dynamically in model-viewer
-  const applyLayerVisibilities = (currentLayers = layers) => {
+  const applyLayerVisibilities = (currentLayers: LayerState = layers) => {
     if (!modelViewerRef.current || !modelViewerRef.current.model) return;
     const model = modelViewerRef.current.model;
     const materials = model.materials || [];
@@ -81,13 +94,13 @@ export default function MeshViewer({
           baseColor[0],
           baseColor[1],
           baseColor[2],
-          targetVisible ? targetAlpha : 0.0
+          targetVisible ? targetAlpha : 0.0,
         ]);
       }
     });
   };
 
-  const toggleLayer = (layerKey) => {
+  const toggleLayer = (layerKey: keyof LayerState) => {
     setLayers((prev) => {
       const next = { ...prev, [layerKey]: !prev[layerKey] };
       applyLayerVisibilities(next);
@@ -110,7 +123,7 @@ export default function MeshViewer({
 
   // Fullscreen Esc key handler
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isFullscreen) {
         setIsFullscreen(false);
       }
@@ -134,7 +147,7 @@ export default function MeshViewer({
   };
 
   // Camera presets
-  const setCameraPreset = (preset) => {
+  const setCameraPreset = (preset: 'anterior' | 'sagittal' | 'axial' | 'oblique') => {
     if (!modelViewerRef.current) return;
     setActivePreset(preset);
     if (preset === 'anterior') {
@@ -169,22 +182,22 @@ export default function MeshViewer({
 
   const modelUrl = resolveModelUrl(scan.model_url);
 
-  const getIntegrityBadge = (score) => {
+  const getIntegrityBadge = (score: number) => {
     if (score >= 80) {
       return {
         bg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
-        label: 'Maturation / High Integrity'
+        label: 'Maturation / High Integrity',
       };
     }
     if (score >= 65) {
       return {
         bg: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-        label: 'Revascularization / Moderate'
+        label: 'Revascularization / Moderate',
       };
     }
     return {
       bg: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
-      label: 'Early Remodeling / Vulnerable'
+      label: 'Early Remodeling / Vulnerable',
     };
   };
 
@@ -213,7 +226,8 @@ export default function MeshViewer({
               </span>
             </h2>
             <p className="text-xs text-slate-400">
-              Subjekt <span className="font-mono text-teal-300">{patientId}</span> • Kontrola <strong className="text-slate-200">{scan.months_post_op} měs.</strong> od plastiky
+              Subjekt <span className="font-mono text-teal-300">{patientId}</span> • Kontrola{' '}
+              <strong className="text-slate-200">{scan.months_post_op} měs.</strong> od plastiky
             </p>
           </div>
         </div>
@@ -223,7 +237,7 @@ export default function MeshViewer({
           {onToggleExpansive && !isFullscreen && (
             <button
               onClick={onToggleExpansive}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isExpansive
                   ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
                   : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700'
@@ -236,20 +250,23 @@ export default function MeshViewer({
 
           <button
             onClick={() => setAutoRotate(!autoRotate)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
               autoRotate
                 ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
                 : 'bg-slate-850 border-slate-750 text-slate-400 hover:text-slate-200'
             }`}
             title="Přepnout 360° rotaci"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`} style={{ animationDuration: '8s' }} />
+            <RotateCw
+              className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`}
+              style={{ animationDuration: '8s' }}
+            />
             <span className="hidden sm:inline">360° Rotace</span>
           </button>
 
           <button
             onClick={resetCamera}
-            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors cursor-pointer"
             title="Resetovat pohled kamery"
           >
             <RefreshCw className="w-4 h-4" />
@@ -257,7 +274,7 @@ export default function MeshViewer({
 
           <button
             onClick={toggleFullscreen}
-            className={`p-1.5 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium ${
+            className={`p-1.5 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer ${
               isFullscreen
                 ? 'bg-teal-500 text-slate-950 border-teal-400 font-bold'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
@@ -281,7 +298,7 @@ export default function MeshViewer({
           {/* Femur Toggle */}
           <button
             onClick={() => toggleLayer('femur')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.femur
                 ? 'bg-[#e8dcc8]/20 border-[#e8dcc8]/60 text-[#e8dcc8] font-medium'
                 : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
@@ -295,7 +312,7 @@ export default function MeshViewer({
           {/* Tibia Toggle */}
           <button
             onClick={() => toggleLayer('tibia')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.tibia
                 ? 'bg-[#d4c5a9]/20 border-[#d4c5a9]/60 text-[#d4c5a9] font-medium'
                 : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
@@ -309,7 +326,7 @@ export default function MeshViewer({
           {/* ACL Graft Toggle */}
           <button
             onClick={() => toggleLayer('acl')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.acl
                 ? 'bg-[#ff8c42]/20 border-[#ff8c42]/60 text-[#ff8c42] font-semibold'
                 : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
@@ -323,7 +340,7 @@ export default function MeshViewer({
           {/* Tibial Plateau Toggle */}
           <button
             onClick={() => toggleLayer('plateau')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.plateau
                 ? 'bg-[#22d3ee]/20 border-[#22d3ee]/60 text-[#22d3ee] font-medium'
                 : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
@@ -337,7 +354,7 @@ export default function MeshViewer({
           {/* Bernard-Hertel Grid Toggle */}
           <button
             onClick={() => toggleLayer('grid')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.grid
                 ? 'bg-[#4ade80]/20 border-[#4ade80]/60 text-[#4ade80] font-medium'
                 : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
@@ -353,8 +370,10 @@ export default function MeshViewer({
         <div className="flex items-center space-x-1 border-l border-slate-800 pl-2">
           <button
             onClick={() => setCameraPreset('anterior')}
-            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
-              activePreset === 'anterior' ? 'bg-teal-500/25 text-teal-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+              activePreset === 'anterior'
+                ? 'bg-teal-500/25 text-teal-300 font-semibold'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
             title="Přední pohled (Anterior)"
           >
@@ -362,8 +381,10 @@ export default function MeshViewer({
           </button>
           <button
             onClick={() => setCameraPreset('sagittal')}
-            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
-              activePreset === 'sagittal' ? 'bg-teal-500/25 text-teal-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+              activePreset === 'sagittal'
+                ? 'bg-teal-500/25 text-teal-300 font-semibold'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
             title="Sagitální boční pohled (Lateral)"
           >
@@ -371,8 +392,10 @@ export default function MeshViewer({
           </button>
           <button
             onClick={() => setCameraPreset('axial')}
-            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
-              activePreset === 'axial' ? 'bg-teal-500/25 text-teal-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+              activePreset === 'axial'
+                ? 'bg-teal-500/25 text-teal-300 font-semibold'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
             title="Axiální shora na plato"
           >
@@ -380,8 +403,10 @@ export default function MeshViewer({
           </button>
           <button
             onClick={() => setCameraPreset('oblique')}
-            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
-              activePreset === 'oblique' ? 'bg-teal-500/25 text-teal-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+              activePreset === 'oblique'
+                ? 'bg-teal-500/25 text-teal-300 font-semibold'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
             title="Šikmý 3D pohled"
           >
@@ -464,4 +489,3 @@ export default function MeshViewer({
     </div>
   );
 }
-

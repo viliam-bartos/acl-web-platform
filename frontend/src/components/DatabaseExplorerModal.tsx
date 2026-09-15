@@ -1,27 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import {
   Database,
-  HardDrive,
   Download,
   RefreshCw,
   Search,
   X,
-  Calendar,
-  Layers,
   Activity,
   User,
   Users,
-  FileCheck
+  FileCheck,
 } from 'lucide-react';
 import { getDatabaseStats, getDatabaseRecords, getDatabaseDownloadUrl } from '../services/api';
+import { DatabaseRecordsResponse, DatabaseStats } from '../types';
 
-export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient }) {
-  const [stats, setStats] = useState(null);
-  const [records, setRecords] = useState({ patients: [], scans: [] });
-  const [activeTab, setActiveTab] = useState('scans'); // 'scans' | 'patients'
+interface DatabaseExplorerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectPatient: (patientId: string) => void;
+}
+
+export default function DatabaseExplorerModal({
+  isOpen,
+  onClose,
+  onSelectPatient,
+}: DatabaseExplorerModalProps) {
+  const [stats, setStats] = useState<DatabaseStats | null>(null);
+  const [records, setRecords] = useState<DatabaseRecordsResponse>({ patients: [], scans: [] });
+  const [activeTab, setActiveTab] = useState<'scans' | 'patients'>('scans');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -29,7 +37,7 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
     try {
       const [statsData, recordsData] = await Promise.all([
         getDatabaseStats(),
-        getDatabaseRecords()
+        getDatabaseRecords(),
       ]);
       setStats(statsData);
       setRecords(recordsData);
@@ -49,7 +57,7 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
 
   // Handle Escape key
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
@@ -60,21 +68,21 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
 
   if (!isOpen) return null;
 
-  const filteredPatients = (records.patients || []).filter(p =>
-    p.patient_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.graft_type && p.graft_type.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredPatients = (records.patients || []).filter(
+    (p) =>
+      p.patient_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.graft_type && p.graft_type.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const filteredScans = (records.scans || []).filter(s =>
-    s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.patient_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (s.source_file && s.source_file.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredScans = (records.scans || []).filter(
+    (s) =>
+      s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.patient_id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-        
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-slate-800 bg-slate-950/80">
           <div className="flex items-center space-x-3">
@@ -221,7 +229,7 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
                 <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
                   {filteredScans.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="py-6 text-center text-slate-500">
+                      <td colSpan={7} className="py-6 text-center text-slate-500">
                         Žádné záznamy vyšetření neodpovídají filtru.
                       </td>
                     </tr>
@@ -235,7 +243,7 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
                               onSelectPatient(s.patient_id);
                               onClose();
                             }}
-                            className="text-teal-400 hover:underline hover:text-teal-300 font-medium"
+                            className="text-teal-400 hover:underline hover:text-teal-300 font-medium cursor-pointer"
                             title="Vybrat tohoto pacienta v hlavní aplikaci"
                           >
                             {s.patient_id}
@@ -245,17 +253,22 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
                         <td className="py-2.5 px-3 font-mono text-slate-200">{s.months_post_op} mo</td>
                         <td className="py-2.5 px-3 font-mono text-teal-300">{s.volume_mm3} mm³</td>
                         <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded-full font-mono font-medium text-[11px] ${
-                            s.integrity_score >= 80
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                              : s.integrity_score >= 65
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                          }`}>
+                          <span
+                            className={`px-2 py-0.5 rounded-full font-mono font-medium text-[11px] ${
+                              s.integrity_score >= 80
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                : s.integrity_score >= 65
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                            }`}
+                          >
                             {s.integrity_score}%
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-400 text-[11px] truncate max-w-[150px]" title={s.model_url}>
+                        <td
+                          className="py-2.5 px-3 font-mono text-slate-400 text-[11px] truncate max-w-[150px]"
+                          title={s.model_url}
+                        >
                           {s.model_url.split('/').pop()}
                         </td>
                       </tr>
@@ -279,7 +292,7 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
                 <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
                   {filteredPatients.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="py-6 text-center text-slate-500">
+                      <td colSpan={5} className="py-6 text-center text-slate-500">
                         Žádní pacienti neodpovídají filtru.
                       </td>
                     </tr>
@@ -296,7 +309,7 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
                               onSelectPatient(p.patient_id);
                               onClose();
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/40 font-medium text-[11px] transition-colors"
+                            className="px-2.5 py-1 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/40 font-medium text-[11px] transition-colors cursor-pointer"
                           >
                             Otevřít profil
                           </button>
@@ -314,13 +327,15 @@ export default function DatabaseExplorerModal({ isOpen, onClose, onSelectPatient
         <div className="px-6 py-3 border-t border-slate-800 bg-slate-950/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
           <div className="flex items-center gap-2">
             <Database className="w-3.5 h-3.5 text-teal-400" />
-            <span>SQLite soubor: <code className="text-slate-300 font-mono">c:\acl-web-app\backend\acl_platform.db</code></span>
+            <span>
+              SQLite soubor:{' '}
+              <code className="text-slate-300 font-mono">c:\acl-web-app\backend\acl_platform.db</code>
+            </span>
           </div>
           <span className="text-[11px] text-slate-500">
             Lze otevřít také v bezplatném programu DB Browser for SQLite
           </span>
         </div>
-
       </div>
     </div>
   );

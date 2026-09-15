@@ -7,17 +7,37 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   CartesianGrid,
-  ReferenceArea
 } from 'recharts';
-import { TrendingUp, Clock, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { TrendingUp, Clock } from 'lucide-react';
+import { ScanRecord } from '../types';
+
+interface TrendChartProps {
+  scans?: ScanRecord[];
+  selectedScanId?: string;
+  onSelectScan: (scan: ScanRecord) => void;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      id: string;
+      months: number;
+      integrity: number;
+      volume: number;
+      scan_date: string;
+      raw: ScanRecord;
+    };
+  }>;
+  label?: string | number;
+}
 
 export default function TrendChart({
   scans = [],
   selectedScanId,
-  onSelectScan
-}) {
+  onSelectScan,
+}: TrendChartProps) {
   if (!scans || scans.length === 0) {
     return (
       <div className="glass-panel rounded-2xl p-6 text-center text-slate-400">
@@ -35,10 +55,10 @@ export default function TrendChart({
     integrity: s.integrity_score,
     volume: s.volume_mm3,
     scan_date: s.scan_date,
-    raw: s
+    raw: s,
   }));
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -108,7 +128,7 @@ export default function TrendChart({
             margin={{ top: 20, right: 20, bottom: 20, left: -10 }}
             onClick={(e) => {
               if (e && e.activePayload && e.activePayload.length) {
-                const clickedScan = e.activePayload[0].payload.raw;
+                const clickedScan = e.activePayload[0].payload.raw as ScanRecord;
                 onSelectScan(clickedScan);
               }
             }}

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
 import { UserCheck, Plus, RefreshCw, Calendar, Dna } from 'lucide-react';
+import { Patient, PatientCreateData } from '../types';
+
+interface PatientSelectProps {
+  patients: Patient[];
+  selectedPatientId: string;
+  onSelectPatient: (patientId: string) => void;
+  onRefresh: () => void;
+  onCreatePatient: (data: PatientCreateData) => Promise<unknown>;
+  isLoading: boolean;
+}
 
 export default function PatientSelect({
   patients,
@@ -7,8 +17,8 @@ export default function PatientSelect({
   onSelectPatient,
   onRefresh,
   onCreatePatient,
-  isLoading
-}) {
+  isLoading,
+}: PatientSelectProps) {
   const [showNewModal, setShowNewModal] = useState(false);
   const [newId, setNewId] = useState('');
   const [newSurgeryDate, setNewSurgeryDate] = useState(new Date().toISOString().split('T')[0]);
@@ -16,7 +26,7 @@ export default function PatientSelect({
   const [createLoading, setCreateLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleCreate = async (e) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newId.trim()) return;
     setCreateLoading(true);
@@ -25,18 +35,18 @@ export default function PatientSelect({
       await onCreatePatient({
         patient_id: newId.trim().toUpperCase(),
         surgery_date: newSurgeryDate,
-        graft_type: newGraftType
+        graft_type: newGraftType,
       });
       setShowNewModal(false);
       setNewId('');
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to create patient');
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to create patient');
     } finally {
       setCreateLoading(false);
     }
   };
 
-  const selectedPatient = patients.find(p => p.patient_id === selectedPatientId);
+  const selectedPatient = patients.find((p) => p.patient_id === selectedPatientId);
 
   return (
     <div className="glass-panel rounded-2xl p-5 mb-6">
@@ -90,20 +100,24 @@ export default function PatientSelect({
                 <span className="font-mono font-semibold text-sm tracking-wide text-teal-300">
                   {patient.patient_id}
                 </span>
-                {patient.latest_integrity_score !== null && (
-                  <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${
-                    patient.latest_integrity_score >= 80
-                      ? 'bg-emerald-500/20 text-emerald-300'
-                      : patient.latest_integrity_score >= 65
-                      ? 'bg-amber-500/20 text-amber-300'
-                      : 'bg-rose-500/20 text-rose-300'
-                  }`}>
+                {patient.latest_integrity_score !== null && patient.latest_integrity_score !== undefined && (
+                  <span
+                    className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${
+                      patient.latest_integrity_score >= 80
+                        ? 'bg-emerald-500/20 text-emerald-300'
+                        : patient.latest_integrity_score >= 65
+                        ? 'bg-amber-500/20 text-amber-300'
+                        : 'bg-rose-500/20 text-rose-300'
+                    }`}
+                  >
                     {patient.latest_integrity_score.toFixed(0)}%
                   </span>
                 )}
               </div>
               <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
-                <span>{patient.total_scans} scan{patient.total_scans === 1 ? '' : 's'}</span>
+                <span>
+                  {patient.total_scans} scan{patient.total_scans === 1 ? '' : 's'}
+                </span>
                 <span>•</span>
                 <span className="truncate max-w-[140px]">{patient.graft_type.split(' ')[0]}</span>
               </div>
@@ -127,7 +141,8 @@ export default function PatientSelect({
           </div>
           {selectedPatient.latest_volume_mm3 && (
             <div className="text-slate-300">
-              Latest Graft Volume: <span className="font-mono text-teal-300 font-medium">{selectedPatient.latest_volume_mm3} mm³</span>
+              Latest Graft Volume:{' '}
+              <span className="font-mono text-teal-300 font-medium">{selectedPatient.latest_volume_mm3} mm³</span>
             </div>
           )}
         </div>
