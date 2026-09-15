@@ -49,17 +49,17 @@ export default function PatientSelect({
   const selectedPatient = patients.find((p) => p.patient_id === selectedPatientId);
 
   return (
-    <div className="panel-composite rounded-xl p-5 mb-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-composite-800">
+    <div className="panel-paper rounded-xl p-5 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-paper-400">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-lg bg-composite-850 text-kraft-400 border border-composite-800">
+          <div className="p-2.5 rounded-lg bg-paper-50 text-kraft-600 border border-paper-400">
             <UserCheck className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold font-display uppercase tracking-wider text-paper-100 flex items-center gap-2">
+            <h2 className="text-xl font-bold font-display uppercase tracking-wider text-composite-900 flex items-center gap-2">
               Seznam Pacientů
             </h2>
-            <p className="text-xs text-paper-300/70">Výběr ID pacienta pro zobrazení průběhu hojení a vyšetření</p>
+            <p className="text-xs text-kraft-700">Výběr ID pacienta pro zobrazení průběhu hojení a vyšetření</p>
           </div>
         </div>
 
@@ -67,10 +67,10 @@ export default function PatientSelect({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-2 rounded-lg bg-composite-850 hover:bg-composite-800 text-paper-200 transition-colors border border-composite-800 disabled:opacity-50"
+            className="p-2 rounded-lg bg-paper-50 hover:bg-paper-200 text-composite-900 transition-colors border border-paper-400 disabled:opacity-50"
             title="Refresh cohort"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-kraft-400' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-kraft-600' : ''}`} />
           </button>
           <button
             onClick={() => setShowNewModal(true)}
@@ -93,13 +93,13 @@ export default function PatientSelect({
               className={`px-4 py-2.5 rounded-lg text-left transition-all border ${
                 isSelected
                   ? 'bg-kraft-400 border-kraft-400 text-composite-950 shadow-md font-medium'
-                  : 'bg-composite-850 border-composite-800 text-paper-200 hover:border-composite-800 hover:bg-composite-800'
+                  : 'bg-paper-50 border-paper-400 text-composite-900 hover:border-paper-400 hover:bg-paper-200'
               }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span
                   className={`font-mono font-bold text-sm tracking-wide ${
-                    isSelected ? 'text-composite-950' : 'text-kraft-400'
+                    isSelected ? 'text-composite-950' : 'text-kraft-600'
                   }`}
                 >
                   {patient.patient_id}
@@ -108,8 +108,8 @@ export default function PatientSelect({
                   <span
                     className={`text-[11px] px-1.5 py-0.5 rounded font-mono font-bold ${
                       isSelected
-                        ? 'bg-composite-950/80 text-paper-100'
-                        : 'bg-composite-900 border border-hazard-500/40 text-hazard-400'
+                        ? 'bg-paper-50/90 text-composite-900'
+                        : 'bg-paper-200 border border-hazard-500/40 text-hazard-600'
                     }`}
                     title="Obsahuje ukázková data, která nejsou skutečná měření"
                   >
@@ -119,7 +119,7 @@ export default function PatientSelect({
               </div>
               <div
                 className={`text-[11px] mt-1 flex items-center gap-1.5 ${
-                  isSelected ? 'text-composite-900 font-medium' : 'text-paper-300/60'
+                  isSelected ? 'text-composite-900 font-medium' : 'text-kraft-600'
                 }`}
               >
                 <span>
@@ -135,26 +135,26 @@ export default function PatientSelect({
 
       {/* Active patient detail banner */}
       {selectedPatient && (
-        <div className="mt-4 pt-3.5 border-t border-composite-800 flex flex-wrap items-center justify-between text-xs text-paper-300/80 gap-y-2">
+        <div className="mt-4 pt-3.5 border-t border-paper-400 flex flex-wrap items-center justify-between text-xs text-kraft-700 gap-y-2">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
             <span className="flex items-center gap-1.5 font-mono">
-              <Calendar className="w-3.5 h-3.5 text-kraft-400" />
-              Operace: <strong className="text-paper-100 font-mono">{selectedPatient.surgery_date}</strong>
+              <Calendar className="w-3.5 h-3.5 text-kraft-600" />
+              Operace: <strong className="text-composite-900 font-mono">{selectedPatient.surgery_date}</strong>
             </span>
             <span className="flex items-center gap-1.5 font-mono">
-              <Dna className="w-3.5 h-3.5 text-cyan-400" />
-              Štěp: <strong className="text-paper-100 font-sans font-medium">{selectedPatient.graft_type}</strong>
+              <Dna className="w-3.5 h-3.5 text-cyan-600" />
+              Štěp: <strong className="text-composite-900 font-sans font-medium">{selectedPatient.graft_type}</strong>
             </span>
           </div>
           {selectedPatient.latest_acl_volume_mm3 !== null &&
             selectedPatient.latest_acl_volume_mm3 !== undefined && (
-              <div className="text-paper-200 font-mono">
+              <div className="text-composite-900 font-mono">
                 Objem štěpu:{' '}
-                <span className="font-mono text-cyan-400 font-bold">
+                <span className="font-mono text-cyan-600 font-bold">
                   {selectedPatient.latest_acl_volume_mm3.toFixed(0)} mm³
                 </span>
                 {selectedPatient.latest_scan_date && (
-                  <span className="text-paper-400/60"> ({selectedPatient.latest_scan_date})</span>
+                  <span className="text-kraft-600"> ({selectedPatient.latest_scan_date})</span>
                 )}
               </div>
             )}
@@ -164,11 +164,11 @@ export default function PatientSelect({
       {/* Modal for adding new patient */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="panel-composite rounded-xl p-6 max-w-md w-full border border-composite-800 shadow-2xl">
-            <h3 className="text-xl font-bold font-display uppercase tracking-wider text-paper-100 mb-2">
+          <div className="panel-paper rounded-xl p-6 max-w-md w-full border border-paper-400 shadow-2xl">
+            <h3 className="text-xl font-bold font-display uppercase tracking-wider text-composite-900 mb-2">
               Registrace nového pacienta
             </h3>
-            <p className="text-xs text-paper-300/70 mb-4">
+            <p className="text-xs text-kraft-700 mb-4">
               Zadejte ID pacienta (např. ACL_105) a datum operace plastiky vazu.
             </p>
 
@@ -180,7 +180,7 @@ export default function PatientSelect({
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-paper-300/80 mb-1">
+                <label className="block text-xs font-mono uppercase tracking-wider text-kraft-700 mb-1">
                   Subject ID (e.g. ACL_202)
                 </label>
                 <input
@@ -189,12 +189,12 @@ export default function PatientSelect({
                   placeholder="ACL_XXX"
                   value={newId}
                   onChange={(e) => setNewId(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-lg bg-composite-950 border border-composite-800 text-paper-100 text-sm focus:border-kraft-400 focus:outline-none uppercase font-mono"
+                  className="w-full px-3.5 py-2 rounded-lg bg-paper-50 border border-paper-400 text-composite-900 text-sm focus:border-kraft-400 focus:outline-none uppercase font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-paper-300/80 mb-1">
+                <label className="block text-xs font-mono uppercase tracking-wider text-kraft-700 mb-1">
                   Surgery Date
                 </label>
                 <input
@@ -202,18 +202,18 @@ export default function PatientSelect({
                   required
                   value={newSurgeryDate}
                   onChange={(e) => setNewSurgeryDate(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-lg bg-composite-950 border border-composite-800 text-paper-100 text-sm focus:border-kraft-400 focus:outline-none font-mono"
+                  className="w-full px-3.5 py-2 rounded-lg bg-paper-50 border border-paper-400 text-composite-900 text-sm focus:border-kraft-400 focus:outline-none font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-paper-300/80 mb-1">
+                <label className="block text-xs font-mono uppercase tracking-wider text-kraft-700 mb-1">
                   Graft Type
                 </label>
                 <select
                   value={newGraftType}
                   onChange={(e) => setNewGraftType(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-lg bg-composite-950 border border-composite-800 text-paper-100 text-sm focus:border-kraft-400 focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-lg bg-paper-50 border border-paper-400 text-composite-900 text-sm focus:border-kraft-400 focus:outline-none"
                 >
                   <option value="Hamstring Tendon Autograft (ST/G)">Hamstring Tendon Autograft (ST/G)</option>
                   <option value="Bone-Patellar Tendon-Bone (BPTB)">Bone-Patellar Tendon-Bone (BPTB)</option>
@@ -227,7 +227,7 @@ export default function PatientSelect({
                 <button
                   type="button"
                   onClick={() => setShowNewModal(false)}
-                  className="px-4 py-2 rounded-lg text-paper-400 hover:text-paper-100 text-xs font-mono uppercase tracking-wider"
+                  className="px-4 py-2 rounded-lg text-kraft-600 hover:text-composite-900 text-xs font-mono uppercase tracking-wider"
                 >
                   Zrušit
                 </button>

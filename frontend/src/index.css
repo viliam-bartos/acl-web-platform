@@ -13,8 +13,8 @@
   }
 
   body {
-    background-color: #121416;
-    color: #EFE6D5;
+    background-color: #F4EBD9;
+    color: #1A1D20;
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
   }
@@ -26,13 +26,6 @@
 }
 
 /* Industrial Matte Panels */
-.panel-composite {
-  background-color: #1A1D20;
-  border: 1px solid #2D3237;
-  color: #EFE6D5;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
 .panel-paper {
   background-color: #F4EBD9;
   border: 1px solid #E0D3BD;
@@ -85,12 +78,12 @@ model-viewer {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #121416;
+  background: #F4EBD9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2D3237;
+  background: #D5C5A8;
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #C4A482;
+  background: #9E7B56;
 }

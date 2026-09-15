@@ -48,7 +48,7 @@ const TrendTooltip: React.FC<TrendTooltipProps> = ({ active, payload, label, def
       </div>
       <div className="flex items-center justify-between gap-6">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-composite-900 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-paper-200 inline-block" />
           {definition.label}:
         </span>
         <span className="font-bold text-composite-900">
@@ -84,13 +84,9 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
 
   if (sortedScans.length === 0) {
     return (
-      <div className="panel-composite rounded-xl p-6 text-center">
-        <TrendingUp className="w-8 h-8 mx-auto mb-2 text-paper-400/50" />
-        <p className="text-sm font-semibold text-paper-100">Zatím žádná vyšetření</p>
-        <p className="text-xs text-paper-300/70 font-mono mt-1 max-w-md mx-auto">
-          Nahrajte sken nebo použijte tlačítko „Referenční MRI (Case 074)“. Aplikace neukazuje
-          ukázkovou křivku hojení – graf vzniká výhradně z naměřených hodnot.
-        </p>
+      <div className="panel-paper rounded-xl p-6 text-center">
+        <TrendingUp className="w-8 h-8 mx-auto mb-2 text-kraft-600" />
+        <p className="text-sm font-semibold text-composite-900">Zatím žádná vyšetření</p>
       </div>
     );
   }
@@ -100,17 +96,13 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-paper-400">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-composite-900 text-paper-100">
+          <div className="p-2 rounded-lg bg-paper-200 text-composite-900">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wider text-composite-900">
               Vývoj štěpu v čase
             </h2>
-            <p className="text-xs text-kraft-700 font-mono">
-              Naměřené parametry proti měsícům od plastiky ({chartData.length} z {sortedScans.length}{' '}
-              vyšetření má tuto metriku)
-            </p>
           </div>
         </div>
       </div>
@@ -124,7 +116,7 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
             title={metric.meaning}
             className={`px-2.5 py-1 rounded text-[11px] font-mono border transition-colors cursor-pointer ${
               metric.key === definition.key
-                ? 'bg-composite-900 text-paper-100 border-composite-900 font-semibold'
+                ? 'bg-composite-900 text-paper-50 border-composite-900 font-semibold'
                 : 'bg-paper-50 text-composite-900 border-paper-400 hover:bg-paper-200'
             }`}
           >
@@ -258,11 +250,6 @@ export default function TrendChart({ scans = [], selectedScanId, onSelectScan }:
           })}
         </div>
       </div>
-
-      <p className="mt-3 pt-3 border-t border-paper-400 text-[11px] font-mono text-kraft-700">
-        Graf zobrazuje jednu naměřenou veličinu. Žádné souhrnné skóre ani prahové hodnoty se
-        nevykreslují – hodnocení vývoje patří lékaři.
-      </p>
     </div>
   );
 }
