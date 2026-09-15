@@ -4,57 +4,93 @@
 
 @layer base {
   :root {
-    --bg-main: #090d16;
-    --card-bg: rgba(15, 23, 42, 0.75);
-    --border-color: rgba(51, 65, 85, 0.6);
+    --bg-main: #121416;
+    --color-composite: #1A1D20;
+    --color-paper: #F4EBD9;
+    --color-kraft: #C4A482;
+    --color-hazard: #F58220;
+    --color-cyan: #38B6FF;
   }
 
   body {
-    background: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
-    color: #f1f5f9;
+    background-color: #121416;
+    color: #EFE6D5;
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.025em;
+  }
 }
 
-/* Custom glassmorphism card */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.5);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+/* Industrial Matte Panels */
+.panel-composite {
+  background-color: #1A1D20;
+  border: 1px solid #2D3237;
+  color: #EFE6D5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
-.glass-panel-glow {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(20, 184, 166, 0.25);
-  box-shadow: 0 0 25px -5px rgba(20, 184, 166, 0.15);
+.panel-paper {
+  background-color: #F4EBD9;
+  border: 1px solid #E0D3BD;
+  color: #1A1D20;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* Model-viewer styling */
+/* Technical Material Badges */
+.badge-kraft {
+  background-color: #C4A482;
+  color: #121416;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+.badge-paper {
+  background-color: #F4EBD9;
+  color: #1A1D20;
+  border: 1px solid #DFD3BD;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.badge-hazard {
+  background-color: #F58220;
+  color: #121416;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+.badge-cyan {
+  background-color: #38B6FF;
+  color: #121416;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+/* 3D Model-viewer canvas styling (Off-white paper with vignette) */
 model-viewer {
   width: 100%;
   height: 100%;
   min-height: 380px;
-  background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
+  background: radial-gradient(circle at center, #FAF7F0 0%, #F3E9D7 70%, #E6D9C0 100%);
   --poster-color: transparent;
   outline: none;
 }
 
-/* Custom scrollbars */
+/* Technical Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: #121416;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
-  border-radius: 4px;
+  background: #2D3237;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(20, 184, 166, 0.6);
+  background: #C4A482;
 }

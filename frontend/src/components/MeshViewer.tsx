@@ -34,11 +34,10 @@ export default function MeshViewer({
   onToggleExpansive = null,
 }: MeshViewerProps) {
   const [autoRotate, setAutoRotate] = useState(false);
-  const [exposure] = useState('1.1');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activePreset, setActivePreset] = useState<'anterior' | 'sagittal' | 'axial' | 'oblique'>('anterior');
 
-  // Layer visibility toggles matching C:\ACL_analysis\ACL_graft_analysis
+  // Layer visibility toggles
   const [layers, setLayers] = useState<LayerState>({
     femur: true,
     tibia: true,
@@ -50,7 +49,8 @@ export default function MeshViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const modelViewerRef = useRef<ModelViewerElement | null>(null);
 
-  // Apply material opacity / visibility dynamically in model-viewer
+  // Apply material opacity and exact color scheme dynamically in model-viewer
+  // Kosti = jasně bílé, Vaz = matně žlutý, Úpony = matně oranžové, Plato a Grid = cyan
   const applyLayerVisibilities = useCallback((currentLayers: LayerState = layers) => {
     if (!modelViewerRef.current || !modelViewerRef.current.model) return;
     const model = modelViewerRef.current.model;
@@ -60,25 +60,32 @@ export default function MeshViewer({
       const name = (mat.name || '').toLowerCase();
       let targetVisible = true;
       let targetAlpha = 0.95;
+      let targetColor = [1.0, 1.0, 1.0];
 
       if (name.includes('femur')) {
         targetVisible = currentLayers.femur;
-        targetAlpha = 0.35;
+        targetAlpha = 0.40;
+        targetColor = [1.0, 1.0, 1.0]; // Jasně bílé kosti
       } else if (name.includes('tibia')) {
         targetVisible = currentLayers.tibia;
-        targetAlpha = 0.35;
+        targetAlpha = 0.40;
+        targetColor = [1.0, 1.0, 1.0]; // Jasně bílé kosti
       } else if (name.includes('acl')) {
         targetVisible = currentLayers.acl;
         targetAlpha = 0.95;
+        targetColor = [0.92, 0.70, 0.05]; // Matně žlutý ACL vaz
       } else if (name.includes('plateau')) {
         targetVisible = currentLayers.plateau;
         targetAlpha = 0.45;
+        targetColor = [0.22, 0.71, 1.0]; // Technická cyan
       } else if (name.includes('bh') || name.includes('grid') || name.includes('ref') || name.includes('blum')) {
         targetVisible = currentLayers.grid;
         targetAlpha = 0.85;
+        targetColor = [0.22, 0.71, 1.0]; // Technická cyan
       } else if (name.includes('footprint')) {
         targetVisible = currentLayers.acl;
         targetAlpha = 0.95;
+        targetColor = [0.96, 0.46, 0.12]; // Matně oranžové úpony
       }
 
       if (typeof mat.setAlphaMode === 'function') {
@@ -89,11 +96,10 @@ export default function MeshViewer({
       }
 
       if (mat.pbrMetallicRoughness) {
-        const baseColor = mat.pbrMetallicRoughness.baseColorFactor;
         mat.pbrMetallicRoughness.setBaseColorFactor([
-          baseColor[0],
-          baseColor[1],
-          baseColor[2],
+          targetColor[0],
+          targetColor[1],
+          targetColor[2],
           targetVisible ? targetAlpha : 0.0,
         ]);
       }
@@ -108,7 +114,6 @@ export default function MeshViewer({
     });
   };
 
-  // Listen to model load event to apply layers immediately
   useEffect(() => {
     const viewer = modelViewerRef.current;
     if (!viewer) return;
@@ -121,7 +126,6 @@ export default function MeshViewer({
     return () => viewer.removeEventListener('load', handleLoad);
   }, [scan?.model_url, layers, applyLayerVisibilities]);
 
-  // Fullscreen Esc key handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isFullscreen) {
@@ -146,7 +150,6 @@ export default function MeshViewer({
     }
   };
 
-  // Camera presets
   const setCameraPreset = (preset: 'anterior' | 'sagittal' | 'axial' | 'oblique') => {
     if (!modelViewerRef.current) return;
     setActivePreset(preset);
@@ -168,13 +171,15 @@ export default function MeshViewer({
 
   if (!scan) {
     return (
-      <div className="glass-panel rounded-2xl p-8 flex flex-col items-center justify-center min-h-[480px] text-center">
-        <div className="p-4 rounded-full bg-slate-800/80 text-slate-500 mb-3 border border-slate-700/60">
+      <div className="panel-composite rounded-2xl p-8 flex flex-col items-center justify-center min-h-[480px] text-center">
+        <div className="p-4 rounded-xl bg-composite-850 text-paper-300 mb-3 border border-composite-800">
           <Box className="w-8 h-8" />
         </div>
-        <h3 className="text-base font-semibold text-slate-200">Nebyl vybrán žádný 3D sken</h3>
-        <p className="text-xs text-slate-400 max-w-sm mt-1">
-          Vyberte pacienta a vyšetření z časové osy nebo nahrajte nový MRI sken pro kompletní 3D zobrazení kolenního kloubu.
+        <h3 className="text-base font-semibold text-paper-100 font-display tracking-wide uppercase">
+          Nebyl vybrán žádný 3D sken
+        </h3>
+        <p className="text-xs text-paper-300 max-w-sm mt-1">
+          Vyberte pacienta a vyšetření z časové osy nebo nahrajte nový MRI sken pro 3D zobrazení kolenního kloubu.
         </p>
       </div>
     );
@@ -182,52 +187,33 @@ export default function MeshViewer({
 
   const modelUrl = resolveModelUrl(scan.model_url);
 
-  const getIntegrityBadge = (score: number) => {
-    if (score >= 80) {
-      return {
-        bg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
-        label: 'Maturation / High Integrity',
-      };
-    }
-    if (score >= 65) {
-      return {
-        bg: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-        label: 'Revascularization / Moderate',
-      };
-    }
-    return {
-      bg: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
-      label: 'Early Remodeling / Vulnerable',
-    };
-  };
-
-  const badge = getIntegrityBadge(scan.integrity_score);
-
   return (
     <div
       ref={containerRef}
-      className={`glass-panel rounded-2xl transition-all duration-300 flex flex-col ${
+      className={`panel-composite rounded-2xl transition-all duration-300 flex flex-col ${
         isFullscreen
-          ? 'fixed inset-0 z-50 bg-slate-950/98 p-4 sm:p-6 rounded-none'
+          ? 'fixed inset-0 z-50 bg-[#121416] p-4 sm:p-6 rounded-none'
           : 'p-5 mb-6 relative overflow-hidden'
       }`}
     >
-      {/* Header with Title and Quick Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800 z-10">
+      {/* Header with Title and Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-composite-800">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+          <div className="p-2 rounded-lg bg-kraft-400 text-composite-950">
             <Box className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
-              3D Rekonstrukce Kolene (Anatomie & Geometrie)
-              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${badge.bg}`}>
-                {scan.integrity_score.toFixed(1)}% Integrita
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-lg font-bold text-paper-100 font-display uppercase tracking-wider">
+                3D Rekonstrukce Kolene
+              </h2>
+              <span className="text-[11px] px-2 py-0.5 rounded badge-kraft">
+                {scan.integrity_score.toFixed(1)}% INTEGRITA
               </span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              Subjekt <span className="font-mono text-teal-300">{patientId}</span> • Kontrola{' '}
-              <strong className="text-slate-200">{scan.months_post_op} měs.</strong> od plastiky
+            </div>
+            <p className="text-xs text-paper-300 font-mono mt-0.5">
+              ID: <span className="text-paper-100 font-semibold">{patientId}</span> • Kontrola{' '}
+              <span className="text-paper-100 font-semibold">{scan.months_post_op} měs.</span>
             </p>
           </div>
         </div>
@@ -237,23 +223,23 @@ export default function MeshViewer({
           {onToggleExpansive && !isFullscreen && (
             <button
               onClick={onToggleExpansive}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-colors cursor-pointer ${
                 isExpansive
-                  ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
-                  : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700'
+                  ? 'bg-kraft-400 text-composite-950 border-kraft-500 font-semibold'
+                  : 'bg-composite-850 hover:bg-composite-800 text-paper-200 border-composite-800'
               }`}
               title="Přepnout širokoúhlé zobrazení"
             >
-              <span>{isExpansive ? 'Kompaktní' : 'Širokoúhlé 3D'}</span>
+              <span>{isExpansive ? 'KOMPAKTNÍ' : 'ŠIROKOÚHLÉ'}</span>
             </button>
           )}
 
           <button
             onClick={() => setAutoRotate(!autoRotate)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-1.5 transition-colors cursor-pointer ${
               autoRotate
-                ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
-                : 'bg-slate-850 border-slate-750 text-slate-400 hover:text-slate-200'
+                ? 'bg-hazard-500 text-composite-950 border-hazard-600 font-bold'
+                : 'bg-composite-850 border-composite-800 text-paper-300 hover:text-paper-100'
             }`}
             title="Přepnout 360° rotaci"
           >
@@ -261,12 +247,12 @@ export default function MeshViewer({
               className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`}
               style={{ animationDuration: '8s' }}
             />
-            <span className="hidden sm:inline">360° Rotace</span>
+            <span>360°</span>
           </button>
 
           <button
             onClick={resetCamera}
-            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg bg-composite-850 hover:bg-composite-800 text-paper-200 border border-composite-800 transition-colors cursor-pointer"
             title="Resetovat pohled kamery"
           >
             <RefreshCw className="w-4 h-4" />
@@ -274,139 +260,138 @@ export default function MeshViewer({
 
           <button
             onClick={toggleFullscreen}
-            className={`p-1.5 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer ${
+            className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1.5 text-xs font-mono cursor-pointer ${
               isFullscreen
-                ? 'bg-teal-500 text-slate-950 border-teal-400 font-bold'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                ? 'bg-hazard-500 text-composite-950 border-hazard-600 font-bold'
+                : 'bg-composite-850 hover:bg-composite-800 text-paper-200 border-composite-800'
             }`}
             title={isFullscreen ? 'Ukončit celou obrazovku (Esc)' : 'Celá obrazovka (Fullscreen)'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            <span className="hidden sm:inline">{isFullscreen ? 'Zpět' : 'Fullscreen'}</span>
           </button>
         </div>
       </div>
 
-      {/* Anatomical Layer Toggles Bar (Femur, Tibia, ACL, Plato, B&H Grid) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 mt-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
-        <div className="flex items-center space-x-1.5 text-slate-400 text-[11px] font-medium mr-2">
-          <Layers className="w-3.5 h-3.5 text-teal-400" />
-          <span className="hidden md:inline">Anatomické vrstvy:</span>
+      {/* Anatomical Layer Toggles Bar (Jasně bílá, matně žlutá, oranžová, cyan) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 mt-3 rounded-xl bg-composite-850 border border-composite-800 text-xs">
+        <div className="flex items-center space-x-1.5 text-paper-300 text-[11px] font-mono mr-2">
+          <Layers className="w-3.5 h-3.5 text-cyan-500" />
+          <span className="hidden md:inline uppercase">Vrstvy:</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {/* Femur Toggle */}
+          {/* Femur (Jasně bílá) */}
           <button
             onClick={() => toggleLayer('femur')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded border text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.femur
-                ? 'bg-[#e8dcc8]/20 border-[#e8dcc8]/60 text-[#e8dcc8] font-medium'
-                : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
+                ? 'bg-paper-100 text-composite-950 border-paper-200 font-semibold'
+                : 'bg-composite-900 border-composite-800 text-paper-400 line-through opacity-60'
             }`}
             title="Přepnout viditelnost kosti stehenní (Femur)"
           >
-            <span className="w-2 h-2 rounded-full bg-[#e8dcc8]" />
-            <span>Femur</span>
+            <span className="w-2 h-2 rounded-full bg-white border border-slate-300" />
+            <span>FEMUR</span>
           </button>
 
-          {/* Tibia Toggle */}
+          {/* Tibia (Jasně bílá) */}
           <button
             onClick={() => toggleLayer('tibia')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded border text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.tibia
-                ? 'bg-[#d4c5a9]/20 border-[#d4c5a9]/60 text-[#d4c5a9] font-medium'
-                : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
+                ? 'bg-paper-100 text-composite-950 border-paper-200 font-semibold'
+                : 'bg-composite-900 border-composite-800 text-paper-400 line-through opacity-60'
             }`}
             title="Přepnout viditelnost kosti holenní (Tibia)"
           >
-            <span className="w-2 h-2 rounded-full bg-[#d4c5a9]" />
-            <span>Tibia</span>
+            <span className="w-2 h-2 rounded-full bg-white border border-slate-300" />
+            <span>TIBIA</span>
           </button>
 
-          {/* ACL Graft Toggle */}
+          {/* ACL Štěp (Matně žlutý) */}
           <button
             onClick={() => toggleLayer('acl')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded border text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.acl
-                ? 'bg-[#ff8c42]/20 border-[#ff8c42]/60 text-[#ff8c42] font-semibold'
-                : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
+                ? 'bg-yellow-400 text-composite-950 border-yellow-500 font-bold'
+                : 'bg-composite-900 border-composite-800 text-paper-400 line-through opacity-60'
             }`}
             title="Přepnout viditelnost ACL vazu a úponů"
           >
-            <span className="w-2 h-2 rounded-full bg-[#ff8c42]" />
-            <span>ACL Štěp</span>
+            <span className="w-2 h-2 rounded-full bg-yellow-400" />
+            <span>ACL ŠTĚP</span>
           </button>
 
-          {/* Tibial Plateau Toggle */}
+          {/* Tibiální Plato (Cyan) */}
           <button
             onClick={() => toggleLayer('plateau')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded border text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.plateau
-                ? 'bg-[#22d3ee]/20 border-[#22d3ee]/60 text-[#22d3ee] font-medium'
-                : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
+                ? 'bg-cyan-500 text-composite-950 border-cyan-600 font-semibold'
+                : 'bg-composite-900 border-composite-800 text-paper-400 line-through opacity-60'
             }`}
-            title="Přepnout rovinu tibiálního plata (RANSAC)"
+            title="Přepnout rovinu tibiálního plata"
           >
-            <span className="w-2 h-2 rounded-full bg-[#22d3ee]" />
-            <span>Tibiální Plato</span>
+            <span className="w-2 h-2 rounded-full bg-cyan-500" />
+            <span>PLATO</span>
           </button>
 
-          {/* Bernard-Hertel Grid Toggle */}
+          {/* Bernard-Hertel Grid (Cyan) */}
           <button
             onClick={() => toggleLayer('grid')}
-            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-2.5 py-1 rounded border text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
               layers.grid
-                ? 'bg-[#4ade80]/20 border-[#4ade80]/60 text-[#4ade80] font-medium'
-                : 'bg-slate-800/40 border-slate-700/50 text-slate-500 line-through'
+                ? 'bg-cyan-500 text-composite-950 border-cyan-600 font-semibold'
+                : 'bg-composite-900 border-composite-800 text-paper-400 line-through opacity-60'
             }`}
             title="Přepnout Bernard-Hertel mřížku & Blumensaatovu linii"
           >
-            <span className="w-2 h-2 rounded-full bg-[#4ade80]" />
-            <span>B&H Mřížka</span>
+            <span className="w-2 h-2 rounded-full bg-cyan-500" />
+            <span>B&H MŘÍŽKA</span>
           </button>
         </div>
 
         {/* Camera Preset Buttons */}
-        <div className="flex items-center space-x-1 border-l border-slate-800 pl-2">
+        <div className="flex items-center space-x-1 border-l border-composite-800 pl-2">
           <button
             onClick={() => setCameraPreset('anterior')}
             className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
               activePreset === 'anterior'
-                ? 'bg-teal-500/25 text-teal-300 font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-paper-100 text-composite-950 font-bold'
+                : 'text-paper-300 hover:text-paper-100'
             }`}
             title="Přední pohled (Anterior)"
           >
-            Ant
+            ANT
           </button>
           <button
             onClick={() => setCameraPreset('sagittal')}
             className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
               activePreset === 'sagittal'
-                ? 'bg-teal-500/25 text-teal-300 font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-paper-100 text-composite-950 font-bold'
+                : 'text-paper-300 hover:text-paper-100'
             }`}
             title="Sagitální boční pohled (Lateral)"
           >
-            Sag
+            SAG
           </button>
           <button
             onClick={() => setCameraPreset('axial')}
             className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
               activePreset === 'axial'
-                ? 'bg-teal-500/25 text-teal-300 font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-paper-100 text-composite-950 font-bold'
+                : 'text-paper-300 hover:text-paper-100'
             }`}
             title="Axiální shora na plato"
           >
-            Ax
+            AX
           </button>
           <button
             onClick={() => setCameraPreset('oblique')}
             className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
               activePreset === 'oblique'
-                ? 'bg-teal-500/25 text-teal-300 font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-paper-100 text-composite-950 font-bold'
+                : 'text-paper-300 hover:text-paper-100'
             }`}
             title="Šikmý 3D pohled"
           >
@@ -415,15 +400,18 @@ export default function MeshViewer({
         </div>
       </div>
 
-      {/* 3D Model Viewer Container */}
+      {/* 3D Model Viewer Container (Off-white paper with subtle vignette) */}
       <div
-        className={`relative w-full rounded-xl overflow-hidden mt-3 border border-slate-800/80 bg-slate-950 transition-all ${
+        className={`relative w-full rounded-xl overflow-hidden mt-3 border border-composite-800 transition-all ${
           isFullscreen
             ? 'flex-1 min-h-[500px]'
             : isExpansive
             ? 'h-[580px] lg:h-[660px]'
             : 'h-[460px] md:h-[540px]'
         }`}
+        style={{
+          background: 'radial-gradient(circle at center, #FAF7F0 0%, #F3E9D7 70%, #E6D9C0 100%)',
+        }}
       >
         <model-viewer
           ref={modelViewerRef}
@@ -434,56 +422,44 @@ export default function MeshViewer({
           auto-rotate={autoRotate ? true : undefined}
           auto-rotate-delay="500"
           rotation-per-second="18deg"
-          shadow-intensity="1.2"
-          shadow-softness="0.7"
-          exposure={exposure}
+          shadow-intensity="1.1"
+          shadow-softness="0.8"
+          exposure="1.05"
           camera-orbit="0deg 85deg 105%"
           min-camera-orbit="auto 0deg 30%"
           max-camera-orbit="auto 180deg 280%"
           interaction-prompt="none"
           loading="eager"
-          style={{ width: '100%', height: '100%', backgroundColor: '#090d16' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            background: 'transparent',
+          }}
         >
           {/* Slot for loading fallback */}
-          <div slot="poster" className="w-full h-full flex items-center justify-center bg-slate-950/80">
-            <div className="flex flex-col items-center text-slate-400 space-y-2">
-              <RefreshCw className="w-6 h-6 animate-spin text-teal-400" />
-              <span className="text-xs">Načítání kompletního 3D modelu kolenního kloubu...</span>
+          <div slot="poster" className="w-full h-full flex items-center justify-center bg-[#F4EBD9]/90">
+            <div className="flex flex-col items-center text-composite-950 space-y-2">
+              <RefreshCw className="w-6 h-6 animate-spin text-hazard-500" />
+              <span className="text-xs font-mono font-medium">Načítání 3D modelu...</span>
             </div>
           </div>
         </model-viewer>
 
-        {/* In-viewport metric HUD overlay (upper-left) */}
-        <div className="absolute top-3 left-3 bg-slate-950/85 backdrop-blur-md rounded-xl p-3 border border-slate-800/80 shadow-xl text-xs space-y-1.5 pointer-events-none z-10">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-slate-400">Objem štěpu:</span>
-            <span className="font-mono font-semibold text-teal-300">{scan.volume_mm3.toFixed(1)} mm³</span>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-slate-400">Integrita vazu:</span>
-            <span className="font-mono font-semibold text-amber-300">{scan.integrity_score.toFixed(1)}%</span>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-slate-400">Časová osa:</span>
-            <span className="font-mono text-slate-200">{scan.months_post_op} měs.</span>
-          </div>
-        </div>
-
-        {/* In-viewport gesture helper overlay (bottom-right) */}
-        <div className="absolute bottom-3 right-3 bg-slate-950/80 backdrop-blur-sm rounded-lg px-2.5 py-1 border border-slate-800/60 text-[11px] text-slate-400 pointer-events-none flex items-center gap-1.5 z-10">
-          <Eye className="w-3.5 h-3.5 text-teal-400" />
-          <span>Levé tlačítko/dotyk: rotace • Kolečko/gesto: zoom • Pravé tlačítko: posun</span>
+        {/* Unobtrusive bottom-right gesture hint */}
+        <div className="absolute bottom-3 right-3 bg-composite-950/70 backdrop-blur-sm rounded px-2.5 py-1 text-[11px] font-mono text-paper-200 pointer-events-none flex items-center gap-1.5 z-10 border border-composite-800">
+          <Eye className="w-3.5 h-3.5 text-cyan-500" />
+          <span>Rotace / Zoom / Posun</span>
         </div>
       </div>
 
       {/* Footer Info */}
-      <div className="mt-3 flex flex-wrap items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60 gap-2">
+      <div className="mt-3 flex flex-wrap items-center justify-between text-xs text-paper-300 pt-2 border-t border-composite-800 gap-2 font-mono">
         <div className="flex items-center gap-2">
-          <Info className="w-4 h-4 text-teal-400" />
-          <span>Kompletní anatomická scéna: Femur, Tibia, ACL štěp, Tibiální plato & B&H mřížka.</span>
+          <Info className="w-4 h-4 text-cyan-500" />
+          <span>Bílé kosti • Žlutý štěp • Oranžové úpony • Cyan plato a mřížka</span>
         </div>
-        <div className="font-mono text-[11px] text-slate-500">
-          Sken: {scan.id}
+        <div className="text-[11px] text-paper-400">
+          SKEN: {scan.id}
         </div>
       </div>
     </div>

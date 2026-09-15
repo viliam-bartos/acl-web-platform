@@ -7,12 +7,13 @@ import numpy as np
 
 # Palette colors matching C:\ACL_analysis\ACL_graft_analysis\Source\anaknee\visualizator_analyzator.py
 PALETTE = {
-    "femur":        "#e8dcc8",     # warm ivory
-    "tibia":        "#d4c5a9",     # warm beige
-    "acl":          "#ff8c42",     # vivid orange
-    "plateau":      "#22d3ee",     # cyan
-    "bh_ref":       "#fbbf24",     # amber
-    "bh_grid":      "#94a3b8",     # slate
+    "femur":        "#ffffff",     # bright white bone
+    "tibia":        "#ffffff",     # bright white bone
+    "acl":          "#eab308",     # matte yellow ACL graft
+    "plateau":      "#38b6ff",     # technical cyan plateau plane
+    "bh_ref":       "#38b6ff",     # cyan reference tube
+    "bh_grid":      "#38b6ff",     # cyan Bernard-Hertel grid
+    "footprints":   "#f97316",     # matte orange attachment footprints
     "acl_vector":   "#c084fc",     # soft purple
 }
 
@@ -275,9 +276,9 @@ def generate_complete_knee_gltf(
     plotter.add_mesh(plateau_plane, color=PALETTE["plateau"], opacity=0.45)
     plotter.add_mesh(bh_merged, color=PALETTE["bh_grid"], opacity=0.85)
     plotter.add_mesh(ref_tube, color=PALETTE["bh_ref"], opacity=1.0)
-    plotter.add_mesh(blum_tube, color="#4ade80", opacity=1.0)
+    plotter.add_mesh(blum_tube, color=PALETTE["bh_ref"], opacity=1.0)
     if mesh_footprints.n_points > 0:
-        plotter.add_mesh(mesh_footprints, color="#ff4d6a", opacity=0.95)
+        plotter.add_mesh(mesh_footprints, color=PALETTE["footprints"], opacity=0.95)
 
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     plotter.export_gltf(out_file)

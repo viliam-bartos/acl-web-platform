@@ -37,27 +37,24 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label })
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="glass-panel-glow bg-slate-900/95 p-3.5 rounded-xl border border-teal-500/30 text-xs space-y-1.5 shadow-xl">
-        <div className="font-semibold text-teal-300 flex items-center justify-between gap-4 border-b border-slate-800 pb-1.5">
-          <span>{label} Months Post-Op</span>
-          <span className="text-slate-400 font-mono text-[11px]">{data.scan_date}</span>
+      <div className="bg-[#FAF6EE] p-3 rounded-lg border border-[#D5C5A8] text-xs font-mono text-[#1A1D20] space-y-1.5 shadow-lg">
+        <div className="font-semibold text-[#1A1D20] flex items-center justify-between gap-4 border-b border-[#E4D8C2] pb-1">
+          <span>{label} MĚSÍCŮ</span>
+          <span className="text-[#78716C] text-[11px]">{data.scan_date}</span>
         </div>
-        <div className="flex items-center justify-between gap-6 text-slate-300">
+        <div className="flex items-center justify-between gap-6">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
-            Integrity Score:
+            <span className="w-2.5 h-2.5 rounded-full bg-[#1A1D20] inline-block" />
+            Integrita štěpu:
           </span>
-          <span className="font-mono font-bold text-amber-300">{data.integrity}%</span>
+          <span className="font-bold text-[#1A1D20]">{data.integrity}%</span>
         </div>
-        <div className="flex items-center justify-between gap-6 text-slate-300">
+        <div className="flex items-center justify-between gap-6">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-400 inline-block"></span>
-            Volume:
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0284C7] inline-block" />
+            Objem vazu:
           </span>
-          <span className="font-mono font-bold text-teal-300">{data.volume} mm³</span>
-        </div>
-        <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800 text-center">
-          Click data point to load 3D mesh
+          <span className="font-bold text-[#0284C7]">{data.volume} mm³</span>
         </div>
       </div>
     );
@@ -72,9 +69,9 @@ export default function TrendChart({
 }: TrendChartProps) {
   if (!scans || scans.length === 0) {
     return (
-      <div className="glass-panel rounded-2xl p-6 text-center text-slate-400">
-        <TrendingUp className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-        <p className="text-sm">No longitudinal scans recorded yet for this subject.</p>
+      <div className="bg-[#F4EBD9] border border-[#E0D3BD] rounded-2xl p-6 text-center text-[#78716C]">
+        <TrendingUp className="w-8 h-8 mx-auto mb-2 text-[#A8A29E]" />
+        <p className="text-sm font-mono">Žádné dlouhodobé záznamy pro tento subjekt.</p>
       </div>
     );
   }
@@ -91,36 +88,37 @@ export default function TrendChart({
   }));
 
   return (
-    <div className="glass-panel rounded-2xl p-5 mb-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+    <div className="bg-[#F4EBD9] border border-[#E0D3BD] rounded-2xl p-5 mb-6 text-[#1A1D20] shadow-sm">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E0D3BD]">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+          <div className="p-2 rounded-lg bg-[#1A1D20] text-[#F4EBD9]">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
-              Longitudinal Remodeling Trajectory
+            <h2 className="text-lg font-bold font-display uppercase tracking-wider text-[#1A1D20]">
+              Trajektorie Remodelace Štěpu
             </h2>
-            <p className="text-xs text-slate-400">
-              Graft integrity score (%) & volumetric remodeling over months post-reconstruction
+            <p className="text-xs text-[#78716C] font-mono">
+              Vývoj integrity vazu (%) a objemu (mm³) v čase od plastiky
             </p>
           </div>
         </div>
 
-        {/* Legend pills */}
-        <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1.5 text-amber-300">
-            <span className="w-3 h-1 rounded-full bg-amber-400"></span>
-            Integrity Score (%)
+        {/* Legend */}
+        <div className="flex items-center gap-4 text-xs font-mono">
+          <span className="flex items-center gap-1.5 text-[#1A1D20] font-semibold">
+            <span className="w-3 h-1.5 rounded-sm bg-[#1A1D20]" />
+            INTEGRITA (%)
           </span>
-          <span className="flex items-center gap-1.5 text-teal-300">
-            <span className="w-3 h-1 rounded-full bg-teal-400"></span>
-            Volume (mm³)
+          <span className="flex items-center gap-1.5 text-[#0284C7] font-semibold">
+            <span className="w-3 h-1.5 rounded-sm bg-[#0284C7]" />
+            OBJEM (mm³)
           </span>
         </div>
       </div>
 
-      {/* Main Chart */}
+      {/* Main Chart (Off-white canvas with Slate Black curve) */}
       <div className="w-full h-72 sm:h-80 mt-4">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
@@ -135,81 +133,82 @@ export default function TrendChart({
           >
             <defs>
               <linearGradient id="integrityGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#1A1D20" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#1A1D20" stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#DFD3BD" />
 
             <XAxis
               dataKey="months"
-              unit=" mo"
-              stroke="#64748b"
-              fontSize={12}
+              unit=" m"
+              stroke="#78716C"
+              fontSize={11}
+              fontFamily="JetBrains Mono"
               tickLine={false}
             />
 
-            {/* Left Axis: Integrity (0 - 100%) */}
+            {/* Left Axis: Integrity (30 - 100%) - Břidlicová černá */}
             <YAxis
               yAxisId="left"
               domain={[30, 100]}
               unit="%"
-              stroke="#f59e0b"
-              fontSize={12}
+              stroke="#1A1D20"
+              fontSize={11}
+              fontFamily="JetBrains Mono"
               tickLine={false}
             />
 
-            {/* Right Axis: Volume (mm3) */}
+            {/* Right Axis: Volume (mm3) - Technická cyan */}
             <YAxis
               yAxisId="right"
               orientation="right"
               domain={['dataMin - 300', 'dataMax + 300']}
               unit=" mm³"
-              stroke="#14b8a6"
+              stroke="#0284C7"
               fontSize={11}
+              fontFamily="JetBrains Mono"
               tickLine={false}
             />
 
             <Tooltip content={<CustomTooltip />} />
 
+            {/* Křivka integrity: Břidlicová černá (#1A1D20) */}
             <Area
               yAxisId="left"
               type="monotone"
               dataKey="integrity"
-              name="Integrity"
-              stroke="#f59e0b"
+              name="Integrita"
+              stroke="#1A1D20"
               strokeWidth={3}
               fill="url(#integrityGradient)"
-              activeDot={{ r: 6, stroke: '#fbbf24', strokeWidth: 2, fill: '#0f172a' }}
+              activeDot={{ r: 5, stroke: '#1A1D20', strokeWidth: 2, fill: '#FAF6EE' }}
             />
 
+            {/* Křivka objemu: Technická cyan (#0284C7) */}
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="volume"
-              name="Volume"
-              stroke="#14b8a6"
-              strokeWidth={2.5}
+              name="Objem"
+              stroke="#0284C7"
+              strokeWidth={2}
               strokeDasharray="4 4"
-              dot={{ r: 4, stroke: '#2dd4bf', fill: '#0f172a' }}
+              dot={{ r: 3.5, stroke: '#0284C7', fill: '#FAF6EE' }}
             />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Interactive Scan Timeline Pills */}
-      <div className="mt-4 pt-3 border-t border-slate-800">
-        <div className="text-xs text-slate-400 mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-teal-400" />
-            Chronological MRI Checkpoints (Click to inspect 3D mesh):
+      {/* Chronological Checkpoints Timeline */}
+      <div className="mt-4 pt-3 border-t border-[#E0D3BD]">
+        <div className="text-xs font-mono text-[#78716C] mb-2 flex items-center justify-between">
+          <span className="flex items-center gap-1.5 font-medium text-[#1A1D20]">
+            <Clock className="w-3.5 h-3.5 text-[#1A1D20]" />
+            ČASOVÁ OSA VYŠETŘENÍ:
           </span>
-          <span className="text-[11px] text-slate-500">{sortedScans.length} total examinations</span>
+          <span className="text-[11px]">{sortedScans.length} ZÁZNAMŮ</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
@@ -219,19 +218,19 @@ export default function TrendChart({
               <button
                 key={s.id}
                 onClick={() => onSelectScan(s)}
-                className={`p-2.5 rounded-xl text-left transition-all border text-xs cursor-pointer ${
+                className={`p-2.5 rounded-lg text-left transition-all border text-xs cursor-pointer font-mono ${
                   isSelected
-                    ? 'bg-amber-500/15 border-amber-500/70 text-white ring-1 ring-amber-400/40'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-850'
+                    ? 'bg-[#C4A482] text-[#121416] border-[#9E7B56] shadow-sm font-semibold'
+                    : 'bg-[#FAF6EE] border-[#E0D3BD] text-[#1A1D20] hover:bg-[#EFE6D5]'
                 }`}
               >
-                <div className="flex items-center justify-between font-mono font-semibold text-xs text-amber-300">
-                  <span>{s.months_post_op} mo</span>
-                  <span className="text-[11px] text-slate-400 font-sans">{s.integrity_score.toFixed(0)}%</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold">{s.months_post_op} měs.</span>
+                  <span className="text-[11px] opacity-80">{s.integrity_score.toFixed(0)}%</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+                <div className="text-[11px] opacity-75 mt-1 flex items-center justify-between">
                   <span>{s.volume_mm3.toFixed(0)} mm³</span>
-                  <span className="text-[10px] text-slate-500 font-mono">{s.scan_date}</span>
+                  <span className="text-[10px]">{s.scan_date}</span>
                 </div>
               </button>
             );

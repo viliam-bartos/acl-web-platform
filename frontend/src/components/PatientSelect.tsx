@@ -49,17 +49,17 @@ export default function PatientSelect({
   const selectedPatient = patients.find((p) => p.patient_id === selectedPatientId);
 
   return (
-    <div className="glass-panel rounded-2xl p-5 mb-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div className="panel-composite rounded-xl p-5 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-composite-800">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+          <div className="p-2.5 rounded-lg bg-composite-850 text-kraft-400 border border-composite-800">
             <UserCheck className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
+            <h2 className="text-xl font-bold font-display uppercase tracking-wider text-paper-100 flex items-center gap-2">
               Seznam Pacientů
             </h2>
-            <p className="text-xs text-slate-400">Výběr ID pacienta pro zobrazení průběhu hojení a vyšetření</p>
+            <p className="text-xs text-paper-300/70">Výběr ID pacienta pro zobrazení průběhu hojení a vyšetření</p>
           </div>
         </div>
 
@@ -67,14 +67,14 @@ export default function PatientSelect({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700 disabled:opacity-50"
+            className="p-2 rounded-lg bg-composite-850 hover:bg-composite-800 text-paper-200 transition-colors border border-composite-800 disabled:opacity-50"
             title="Refresh cohort"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-teal-400' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-kraft-400' : ''}`} />
           </button>
           <button
             onClick={() => setShowNewModal(true)}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-teal-600/90 hover:bg-teal-500 text-white text-xs font-medium transition-colors shadow-sm"
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-kraft-400 hover:bg-kraft-300 text-composite-950 text-xs font-display uppercase tracking-wider font-bold transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span>New ID</span>
@@ -90,31 +90,41 @@ export default function PatientSelect({
             <button
               key={patient.patient_id}
               onClick={() => onSelectPatient(patient.patient_id)}
-              className={`px-4 py-2.5 rounded-xl text-left transition-all border ${
+              className={`px-4 py-2.5 rounded-lg text-left transition-all border ${
                 isSelected
-                  ? 'bg-teal-500/15 border-teal-500/60 text-white shadow-lg shadow-teal-950/40 ring-1 ring-teal-400/40'
-                  : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-850'
+                  ? 'bg-kraft-400 border-kraft-400 text-composite-950 shadow-md font-medium'
+                  : 'bg-composite-850 border-composite-800 text-paper-200 hover:border-composite-800 hover:bg-composite-800'
               }`}
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono font-semibold text-sm tracking-wide text-teal-300">
+                <span
+                  className={`font-mono font-bold text-sm tracking-wide ${
+                    isSelected ? 'text-composite-950' : 'text-kraft-400'
+                  }`}
+                >
                   {patient.patient_id}
                 </span>
                 {patient.latest_integrity_score !== null && patient.latest_integrity_score !== undefined && (
                   <span
-                    className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${
-                      patient.latest_integrity_score >= 80
-                        ? 'bg-emerald-500/20 text-emerald-300'
+                    className={`text-[11px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                      isSelected
+                        ? 'bg-composite-950/80 text-paper-100'
+                        : patient.latest_integrity_score >= 80
+                        ? 'bg-composite-900 border border-emerald-500/40 text-emerald-300'
                         : patient.latest_integrity_score >= 65
-                        ? 'bg-amber-500/20 text-amber-300'
-                        : 'bg-rose-500/20 text-rose-300'
+                        ? 'bg-composite-900 border border-amber-500/40 text-amber-300'
+                        : 'bg-composite-900 border border-rose-500/40 text-rose-300'
                     }`}
                   >
                     {patient.latest_integrity_score.toFixed(0)}%
                   </span>
                 )}
               </div>
-              <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+              <div
+                className={`text-[11px] mt-1 flex items-center gap-1.5 ${
+                  isSelected ? 'text-composite-900 font-medium' : 'text-paper-300/60'
+                }`}
+              >
                 <span>
                   {patient.total_scans} scan{patient.total_scans === 1 ? '' : 's'}
                 </span>
@@ -128,21 +138,21 @@ export default function PatientSelect({
 
       {/* Active patient detail banner */}
       {selectedPatient && (
-        <div className="mt-4 pt-3.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-y-2">
+        <div className="mt-4 pt-3.5 border-t border-composite-800 flex flex-wrap items-center justify-between text-xs text-paper-300/80 gap-y-2">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-slate-500" />
-              Reconstruction Date: <strong className="text-slate-200">{selectedPatient.surgery_date}</strong>
+            <span className="flex items-center gap-1.5 font-mono">
+              <Calendar className="w-3.5 h-3.5 text-kraft-400" />
+              Operace: <strong className="text-paper-100 font-mono">{selectedPatient.surgery_date}</strong>
             </span>
-            <span className="flex items-center gap-1.5">
-              <Dna className="w-3.5 h-3.5 text-teal-400/80" />
-              Graft: <strong className="text-slate-200">{selectedPatient.graft_type}</strong>
+            <span className="flex items-center gap-1.5 font-mono">
+              <Dna className="w-3.5 h-3.5 text-cyan-400" />
+              Štěp: <strong className="text-paper-100 font-sans font-medium">{selectedPatient.graft_type}</strong>
             </span>
           </div>
           {selectedPatient.latest_volume_mm3 && (
-            <div className="text-slate-300">
-              Latest Graft Volume:{' '}
-              <span className="font-mono text-teal-300 font-medium">{selectedPatient.latest_volume_mm3} mm³</span>
+            <div className="text-paper-200 font-mono">
+              Objem štěpu:{' '}
+              <span className="font-mono text-cyan-400 font-bold">{selectedPatient.latest_volume_mm3} mm³</span>
             </div>
           )}
         </div>
@@ -150,10 +160,12 @@ export default function PatientSelect({
 
       {/* Modal for adding new patient */}
       {showNewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="glass-panel-glow bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-teal-500/30">
-            <h3 className="text-lg font-bold text-white mb-2">Registrace nového pacienta</h3>
-            <p className="text-xs text-slate-400 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="panel-composite rounded-xl p-6 max-w-md w-full border border-composite-800 shadow-2xl">
+            <h3 className="text-xl font-bold font-display uppercase tracking-wider text-paper-100 mb-2">
+              Registrace nového pacienta
+            </h3>
+            <p className="text-xs text-paper-300/70 mb-4">
               Zadejte ID pacienta (např. ACL_105) a datum operace plastiky vazu.
             </p>
 
@@ -165,34 +177,40 @@ export default function PatientSelect({
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Subject ID (e.g. ACL_202)</label>
+                <label className="block text-xs font-mono uppercase tracking-wider text-paper-300/80 mb-1">
+                  Subject ID (e.g. ACL_202)
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="ACL_XXX"
                   value={newId}
                   onChange={(e) => setNewId(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-teal-400 focus:outline-none uppercase font-mono"
+                  className="w-full px-3.5 py-2 rounded-lg bg-composite-950 border border-composite-800 text-paper-100 text-sm focus:border-kraft-400 focus:outline-none uppercase font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Surgery Date</label>
+                <label className="block text-xs font-mono uppercase tracking-wider text-paper-300/80 mb-1">
+                  Surgery Date
+                </label>
                 <input
                   type="date"
                   required
                   value={newSurgeryDate}
                   onChange={(e) => setNewSurgeryDate(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-teal-400 focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-lg bg-composite-950 border border-composite-800 text-paper-100 text-sm focus:border-kraft-400 focus:outline-none font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Graft Type</label>
+                <label className="block text-xs font-mono uppercase tracking-wider text-paper-300/80 mb-1">
+                  Graft Type
+                </label>
                 <select
                   value={newGraftType}
                   onChange={(e) => setNewGraftType(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-teal-400 focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-lg bg-composite-950 border border-composite-800 text-paper-100 text-sm focus:border-kraft-400 focus:outline-none"
                 >
                   <option value="Hamstring Tendon Autograft (ST/G)">Hamstring Tendon Autograft (ST/G)</option>
                   <option value="Bone-Patellar Tendon-Bone (BPTB)">Bone-Patellar Tendon-Bone (BPTB)</option>
@@ -206,16 +224,16 @@ export default function PatientSelect({
                 <button
                   type="button"
                   onClick={() => setShowNewModal(false)}
-                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-medium"
+                  className="px-4 py-2 rounded-lg text-paper-400 hover:text-paper-100 text-xs font-mono uppercase tracking-wider"
                 >
-                  Cancel
+                  Zrušit
                 </button>
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-lg bg-hazard-500 hover:bg-hazard-600 text-composite-950 font-display uppercase tracking-wider font-bold text-sm transition-colors disabled:opacity-50"
                 >
-                  {createLoading ? 'Saving...' : 'Register ID'}
+                  {createLoading ? 'Ukládám...' : 'Registrovat ID'}
                 </button>
               </div>
             </form>

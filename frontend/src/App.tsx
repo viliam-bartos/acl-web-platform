@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
   Activity,
-  Cpu,
   CheckCircle,
   AlertCircle,
-  Sparkles,
   Database,
 } from 'lucide-react';
 import PatientSelect from './components/PatientSelect';
 import FileUpload from './components/FileUpload';
 import MeshViewer from './components/MeshViewer';
 import TrendChart from './components/TrendChart';
+import QuantificationCard from './components/QuantificationCard';
 import DatabaseExplorerModal from './components/DatabaseExplorerModal';
 import {
   getPatients,
@@ -137,23 +136,23 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-composite-950 text-paper-100 font-sans">
       {/* Top Clinical Header */}
-      <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-composite-900 border-b border-composite-800 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-4 shadow-lg">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 text-slate-950 shadow-md shadow-teal-500/20 font-bold">
+          <div className="p-2 rounded-lg bg-composite-850 text-kraft-400 border border-composite-800 shadow-md font-bold">
             <Activity className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-bold tracking-tight text-white">
+              <h1 className="text-xl sm:text-2xl font-bold font-display uppercase tracking-wider text-paper-100">
                 ACL Web Platform
               </h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-composite-850 text-kraft-400 border border-composite-800 font-bold">
                 v1.0
               </span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">
+            <p className="text-xs text-paper-300/70 hidden sm:block font-sans">
               Longitudinal ACL Graft Remodeling & Ligamentization Analysis
             </p>
           </div>
@@ -163,21 +162,21 @@ export default function App() {
         <div className="flex items-center space-x-2 sm:space-x-3 text-xs">
           <button
             onClick={() => setIsDatabaseOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-teal-300 transition-colors shadow-sm cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-composite-850 hover:bg-composite-800 border border-composite-800 text-paper-200 hover:text-kraft-300 transition-colors shadow-sm font-mono text-xs cursor-pointer"
             title="Otevřít Prohlížeč Databáze"
           >
-            <Database className="w-4 h-4 text-teal-400" />
+            <Database className="w-4 h-4 text-kraft-400" />
             <span className="font-semibold">Databáze</span>
           </button>
 
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80">
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-composite-850 border border-composite-800 font-mono text-xs">
             <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                backendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+              className={`w-2 h-2 rounded-full ${
+                backendOnline ? 'bg-emerald-400' : 'bg-rose-500'
               }`}
             />
-            <span className="text-slate-300 hidden md:inline">Server:</span>
-            <span className={backendOnline ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}>
+            <span className="text-paper-300/70 hidden md:inline">Server:</span>
+            <span className={backendOnline ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
               {backendOnline ? 'Aktivní' : 'Odpojeno'}
             </span>
           </div>
@@ -188,23 +187,23 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         {toast && (
           <div
-            className={`mb-6 p-4 rounded-2xl flex items-center justify-between border shadow-lg transition-all ${
+            className={`mb-6 p-4 rounded-xl flex items-center justify-between border shadow-xl transition-all font-mono text-xs ${
               toast.type === 'error'
                 ? 'bg-rose-500/20 border-rose-500/40 text-rose-200'
-                : 'bg-teal-500/20 border-teal-500/40 text-teal-200'
+                : 'bg-composite-850 border border-kraft-400/50 text-paper-100'
             }`}
           >
             <div className="flex items-center space-x-3 text-sm">
               {toast.type === 'error' ? (
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-400" />
               ) : (
-                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 flex-shrink-0 text-kraft-400" />
               )}
               <span>{toast.message}</span>
             </div>
             <button
               onClick={() => setToast(null)}
-              className="text-xs opacity-70 hover:opacity-100 px-2 py-1 cursor-pointer"
+              className="text-xs opacity-70 hover:opacity-100 px-2 py-1 cursor-pointer font-mono"
             >
               ✕
             </button>
@@ -242,84 +241,10 @@ export default function App() {
 
               <div className="lg:col-span-4">
                 {selectedScan && (
-                  <div className="glass-panel rounded-2xl p-5 h-full flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                        <div className="flex items-center space-x-2.5">
-                          <Cpu className="w-4 h-4 text-teal-400" />
-                          <h3 className="text-sm font-semibold text-white">
-                            Anatomická & Radiomická Kvantifikace
-                          </h3>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mt-4 text-xs">
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                          <span className="text-slate-400 block text-[11px]">ACL Objem</span>
-                          <span className="font-mono text-base font-bold text-teal-300">
-                            {selectedScan.volume_mm3.toFixed(1)}{' '}
-                            <span className="text-xs text-slate-400 font-sans">mm³</span>
-                          </span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                          <span className="text-slate-400 block text-[11px]">Index integrity</span>
-                          <span className="font-mono text-base font-bold text-amber-300">
-                            {selectedScan.integrity_score.toFixed(1)}{' '}
-                            <span className="text-xs text-slate-400 font-sans">%</span>
-                          </span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                          <span className="text-slate-400 block text-[11px]">Stäubli Tibial %</span>
-                          <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.staubli_tibial_pct != null
-                              ? `${latestAnalysis.staubli_tibial_pct}%`
-                              : '32.6%'}
-                          </span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                          <span className="text-slate-400 block text-[11px]">Anterior Tibial Transl.</span>
-                          <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.att_mm != null ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
-                          </span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                          <span className="text-slate-400 block text-[11px]">Blumensaat Délka</span>
-                          <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.bh_length_pct != null
-                              ? `${latestAnalysis.bh_length_pct}%`
-                              : '43.9%'}
-                          </span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                          <span className="text-slate-400 block text-[11px]">Šířka fosse</span>
-                          <span className="font-mono text-sm font-semibold text-slate-200">
-                            {latestAnalysis?.notch_width_mm != null
-                              ? `${latestAnalysis.notch_width_mm} mm`
-                              : '20.0 mm'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-200 flex items-start gap-2.5">
-                      <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
-                      <div className="text-[11px]">
-                        <span className="font-semibold block text-white">Status hojení štěpu</span>
-                        <span>
-                          {selectedScan.integrity_score >= 80
-                            ? 'Pokročilá ligamentizace s vysokou denzitou kolagenu vhodná pro plné sportovní zatížení.'
-                            : selectedScan.integrity_score >= 65
-                            ? 'Probíhá aktivní revaskularizace a buněčná proliferace. Hojení odpovídá pooperačnímu období.'
-                            : 'Časná pooperační fáze biologické inkorporace štěpu v kostních tunelech.'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <QuantificationCard
+                    scan={selectedScan}
+                    latestAnalysis={latestAnalysis}
+                  />
                 )}
               </div>
 
@@ -358,84 +283,11 @@ export default function App() {
                 onToggleExpansive={() => setIsExpansive3D(true)}
               />
 
-              {/* Geometric & Radiomic Quantitation Panel */}
               {selectedScan && (
-                <div className="glass-panel rounded-2xl p-5">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                    <div className="flex items-center space-x-2.5">
-                      <Cpu className="w-4 h-4 text-teal-400" />
-                      <h3 className="text-sm font-semibold text-white">
-                        Anatomická & Radiomická Kvantifikace
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <span className="text-slate-400 block text-[11px]">ACL Objem</span>
-                      <span className="font-mono text-base font-bold text-teal-300">
-                        {selectedScan.volume_mm3.toFixed(1)}{' '}
-                        <span className="text-xs text-slate-400 font-sans">mm³</span>
-                      </span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <span className="text-slate-400 block text-[11px]">Integrita vazu</span>
-                      <span className="font-mono text-base font-bold text-amber-300">
-                        {selectedScan.integrity_score.toFixed(1)}{' '}
-                        <span className="text-xs text-slate-400 font-sans">%</span>
-                      </span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <span className="text-slate-400 block text-[11px]">Stäubli Tibial %</span>
-                      <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.staubli_tibial_pct != null
-                          ? `${latestAnalysis.staubli_tibial_pct}%`
-                          : '32.6%'}
-                      </span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <span className="text-slate-400 block text-[11px]">Anterior Tibial Transl.</span>
-                      <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.att_mm != null ? `${latestAnalysis.att_mm} mm` : '-1.3 mm'}
-                      </span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <span className="text-slate-400 block text-[11px]">Blumensaat Délka</span>
-                      <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.bh_length_pct != null
-                          ? `${latestAnalysis.bh_length_pct}%`
-                          : '43.9%'}
-                      </span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <span className="text-slate-400 block text-[11px]">Šířka fosse</span>
-                      <span className="font-mono text-sm font-semibold text-slate-200">
-                        {latestAnalysis?.notch_width_mm != null
-                          ? `${latestAnalysis.notch_width_mm} mm`
-                          : '20.0 mm'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-200 flex items-start gap-2.5">
-                    <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold block text-white">Status hojení štěpu</span>
-                      <span>
-                        {selectedScan.integrity_score >= 80
-                          ? 'Pokročilá ligamentizace s vysokou denzitou kolagenu vhodná pro plné sportovní zatížení.'
-                          : selectedScan.integrity_score >= 65
-                          ? 'Probíhá aktivní revaskularizace a buněčná proliferace. Hojení odpovídá pooperačnímu období.'
-                          : 'Časná pooperační fáze biologické inkorporace štěpu v kostních tunelech.'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <QuantificationCard
+                  scan={selectedScan}
+                  latestAnalysis={latestAnalysis}
+                />
               )}
             </div>
           </div>
@@ -450,7 +302,7 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 px-4 sm:px-8 py-4 text-center text-xs text-slate-400">
+      <footer className="border-t border-composite-800 px-4 sm:px-8 py-4 text-center text-xs text-paper-400/60 font-mono">
         <p>ACL Web Platform • Systém pro analýzu a 3D vizualizaci rekonstrukce předního zkříženého vazu</p>
       </footer>
     </div>
