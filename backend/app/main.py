@@ -43,10 +43,15 @@ from app.services import worker_client
 
 logger = logging.getLogger(__name__)
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STATIC_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "static"))
+#: `main.py` leží v `backend/app/`, takže dvě úrovně nahoru je kořen backendu.
+#: (V `core/database.py` je `__file__` o úroveň hlouběji, a proto tam stejně
+#: vypadající výpočet vychází jinam – odtud plynula chyba, kdy se modely ukládaly
+#: do `<repo>/static` místo `backend/static`, v rozporu s docker-compose.)
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.dirname(APP_DIR)
+STATIC_DIR = os.path.join(BACKEND_DIR, "static")
 MODELS_DIR = os.path.join(STATIC_DIR, "models")
-UPLOAD_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "data", "uploads"))
+UPLOAD_DIR = os.path.join(BACKEND_DIR, "data", "uploads")
 
 #: Prefix pro radiomické příznaky – ukládají se jako JSON, ne jako sloupce.
 RADIOMIC_PREFIXES = ("original_firstorder_", "original_glcm_", "original_glrlm_")
