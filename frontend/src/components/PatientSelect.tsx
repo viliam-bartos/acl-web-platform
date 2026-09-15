@@ -104,19 +104,16 @@ export default function PatientSelect({
                 >
                   {patient.patient_id}
                 </span>
-                {patient.latest_integrity_score !== null && patient.latest_integrity_score !== undefined && (
+                {patient.has_demo_scans && (
                   <span
                     className={`text-[11px] px-1.5 py-0.5 rounded font-mono font-bold ${
                       isSelected
                         ? 'bg-composite-950/80 text-paper-100'
-                        : patient.latest_integrity_score >= 80
-                        ? 'bg-composite-900 border border-emerald-500/40 text-emerald-300'
-                        : patient.latest_integrity_score >= 65
-                        ? 'bg-composite-900 border border-amber-500/40 text-amber-300'
-                        : 'bg-composite-900 border border-rose-500/40 text-rose-300'
+                        : 'bg-composite-900 border border-hazard-500/40 text-hazard-400'
                     }`}
+                    title="Obsahuje ukázková data, která nejsou skutečná měření"
                   >
-                    {patient.latest_integrity_score.toFixed(0)}%
+                    UKÁZKA
                   </span>
                 )}
               </div>
@@ -149,12 +146,18 @@ export default function PatientSelect({
               Štěp: <strong className="text-paper-100 font-sans font-medium">{selectedPatient.graft_type}</strong>
             </span>
           </div>
-          {selectedPatient.latest_volume_mm3 && (
-            <div className="text-paper-200 font-mono">
-              Objem štěpu:{' '}
-              <span className="font-mono text-cyan-400 font-bold">{selectedPatient.latest_volume_mm3} mm³</span>
-            </div>
-          )}
+          {selectedPatient.latest_acl_volume_mm3 !== null &&
+            selectedPatient.latest_acl_volume_mm3 !== undefined && (
+              <div className="text-paper-200 font-mono">
+                Objem štěpu:{' '}
+                <span className="font-mono text-cyan-400 font-bold">
+                  {selectedPatient.latest_acl_volume_mm3.toFixed(0)} mm³
+                </span>
+                {selectedPatient.latest_scan_date && (
+                  <span className="text-paper-400/60"> ({selectedPatient.latest_scan_date})</span>
+                )}
+              </div>
+            )}
         </div>
       )}
 

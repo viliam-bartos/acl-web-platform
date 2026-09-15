@@ -1,10 +1,5 @@
-import { useState, useEffect } from 'react';
-import {
-  Activity,
-  CheckCircle,
-  AlertCircle,
-  Database,
-} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Activity, AlertCircle, AlertTriangle, CheckCircle, Database, RefreshCw } from 'lucide-react';
 import PatientSelect from './components/PatientSelect';
 import FileUpload from './components/FileUpload';
 import MeshViewer from './components/MeshViewer';
@@ -12,19 +7,17 @@ import TrendChart from './components/TrendChart';
 import QuantificationCard from './components/QuantificationCard';
 import DatabaseExplorerModal from './components/DatabaseExplorerModal';
 import {
-  getPatients,
+  AnalysisPendingError,
+  getHealth,
   getPatientHistory,
+  getPatients,
   analyzeScan,
   analyzeReferenceScan,
   createPatient,
+  latestReadyScan,
+  refreshScan,
 } from './services/api';
-import {
-  Patient,
-  PatientCreateData,
-  PatientHistory,
-  RadiomicsSummary,
-  ScanRecord,
-} from './types';
+import { Patient, PatientCreateData, PatientHistory, ScanRecord, WorkerHealth } from './types';
 
 interface ToastState {
   message: string;
@@ -36,18 +29,32 @@ export default function App() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>('ACL_042');
   const [history, setHistory] = useState<PatientHistory | null>(null);
   const [selectedScan, setSelectedScan] = useState<ScanRecord | null>(null);
-  const [latestAnalysis, setLatestAnalysis] = useState<RadiomicsSummary | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isLoadingCohort, setIsLoadingCohort] = useState<boolean>(false);
   const [backendOnline, setBackendOnline] = useState<boolean>(true);
+  const [worker, setWorker] = useState<WorkerHealth | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [pendingScanId, setPendingScanId] = useState<string | null>(null);
   const [isDatabaseOpen, setIsDatabaseOpen] = useState<boolean>(false);
   const [isExpansive3D, setIsExpansive3D] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 5000);
+    setTimeout(() => setToast(null), 6000);
   };
+
+  const loadHealth = useCallback(async () => {
+    try {
+      const health = await getHealth();
+      setWorker(health.compute_worker);
+      setBackendOnline(true);
+    } catch (err) {
+      console.error('Backend není dostupný:', err);
+      setBackendOnline(false);
+      setWorker(null);
+    }
+  }, []);
 
   const loadPatients = async (preferredId: string | null = null) => {
     setIsLoadingCohort(true);
@@ -74,12 +81,8 @@ export default function App() {
       const data = await getPatientHistory(patientId);
       setHistory(data);
       setBackendOnline(true);
-      if (data.scans && data.scans.length > 0) {
-        const sorted = [...data.scans].sort((a, b) => b.months_post_op - a.months_post_op);
-        setSelectedScan(sorted[0]);
-      } else {
-        setSelectedScan(null);
-      }
+      // Vybíráme nejnovější **hotové** vyšetření; rozpracované nemá metriky.
+      setSelectedScan(latestReadyScan(data.scans));
     } catch (err) {
       console.error(`Failed to load history for ${patientId}:`, err);
     }
@@ -87,7 +90,8 @@ export default function App() {
 
   useEffect(() => {
     loadPatients('ACL_042');
-  }, []);
+    loadHealth();
+  }, [loadHealth]);
 
   useEffect(() => {
     if (selectedPatientId) {
@@ -95,17 +99,31 @@ export default function App() {
     }
   }, [selectedPatientId]);
 
+  const applyResult = async (patientId: string, message: string, resultWarnings: string[]) => {
+    setWarnings(resultWarnings);
+    showToast(message);
+    await loadPatients(patientId);
+    await loadHistory(patientId);
+    await loadHealth();
+  };
+
   const handleUploadScan = async (patientId: string, monthsPostOp: number, file: File) => {
     setIsProcessing(true);
+    setPendingScanId(null);
     try {
       const res = await analyzeScan(patientId, monthsPostOp, file);
-      setLatestAnalysis(res.radiomics_summary);
-      showToast(`Scan processed: ${res.message}`);
-      await loadPatients(patientId);
-      await loadHistory(patientId);
       setSelectedScan(res.scan);
+      await applyResult(patientId, `Vyšetření zpracováno workerem. ${res.message}`, res.warnings);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Error processing MRI scan', 'error');
+      if (err instanceof AnalysisPendingError) {
+        // Výpočet běží dál; záznam zůstává ve stavu pending a jde dotáhnout.
+        setPendingScanId(err.scanId ?? null);
+        setWarnings([]);
+        showToast(err.message, 'error');
+        await loadHistory(patientId);
+      } else {
+        showToast(err instanceof Error ? err.message : 'Analýza skenu selhala.', 'error');
+      }
       throw err;
     } finally {
       setIsProcessing(false);
@@ -114,16 +132,39 @@ export default function App() {
 
   const handleAnalyzeReference = async (patientId: string, monthsPostOp: number) => {
     setIsProcessing(true);
+    setPendingScanId(null);
     try {
       const res = await analyzeReferenceScan(patientId, monthsPostOp);
-      setLatestAnalysis(res.radiomics_summary);
-      showToast(`Referenční vyšetření (Case 074) načteno.`);
-      await loadPatients(patientId);
-      await loadHistory(patientId);
       setSelectedScan(res.scan);
+      await applyResult(patientId, 'Referenční vyšetření (Case 074) zpracováno.', res.warnings);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Error evaluating reference scan', 'error');
+      if (err instanceof AnalysisPendingError) {
+        setPendingScanId(err.scanId ?? null);
+        showToast(err.message, 'error');
+        await loadHistory(patientId);
+      } else {
+        showToast(err instanceof Error ? err.message : 'Zhodnocení referenčního skenu selhalo.', 'error');
+      }
       throw err;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRefreshPending = async () => {
+    if (!pendingScanId || !selectedPatientId) return;
+    setIsProcessing(true);
+    try {
+      const res = await refreshScan(pendingScanId);
+      if (res.status === 'success') {
+        setPendingScanId(null);
+        setSelectedScan(res.scan);
+        await applyResult(selectedPatientId, 'Výsledek dotažen z workera.', res.warnings);
+      } else {
+        showToast(res.message);
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Výsledek se nepodařilo dotáhnout.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -149,11 +190,11 @@ export default function App() {
                 ACL Web Platform
               </h1>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-composite-850 text-kraft-400 border border-composite-800 font-bold">
-                v1.0
+                v2.0
               </span>
             </div>
             <p className="text-xs text-paper-300/70 hidden sm:block font-sans">
-              Longitudinal ACL Graft Remodeling & Ligamentization Analysis
+              Tenká aplikace • veškerý výpočet dělá worker na výkonném počítači
             </p>
           </div>
         </div>
@@ -168,6 +209,21 @@ export default function App() {
             <Database className="w-4 h-4 text-kraft-400" />
             <span className="font-semibold">Databáze</span>
           </button>
+
+          <div
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-composite-850 border border-composite-800 font-mono text-xs"
+            title={worker?.detail ?? worker?.device ?? 'Výpočetní worker'}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                worker?.reachable ? 'bg-cyan-400' : 'bg-hazard-500'
+              }`}
+            />
+            <span className="text-paper-300/70 hidden md:inline">Worker:</span>
+            <span className={worker?.reachable ? 'text-cyan-400 font-bold' : 'text-hazard-400 font-bold'}>
+              {worker?.reachable ? 'Připojen' : 'Nedostupný'}
+            </span>
+          </div>
 
           <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-composite-850 border border-composite-800 font-mono text-xs">
             <span
@@ -210,6 +266,47 @@ export default function App() {
           </div>
         )}
 
+        {/* Varování z workera – například že se nepočítala radiomika */}
+        {warnings.length > 0 && (
+          <div className="mb-6 p-4 rounded-xl bg-composite-850 border border-hazard-500/40 text-paper-200 text-xs font-mono space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 font-bold text-hazard-400">
+                <AlertTriangle className="w-4 h-4" />
+                Poznámky k výpočtu
+              </span>
+              <button
+                onClick={() => setWarnings([])}
+                className="text-xs opacity-70 hover:opacity-100 px-2 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            {warnings.map((warning, index) => (
+              <div key={index} className="pl-6">
+                • {warning}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Nedokončený výpočet, který překročil časový limit požadavku */}
+        {pendingScanId && (
+          <div className="mb-6 p-4 rounded-xl bg-composite-850 border border-cyan-500/40 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs font-mono text-paper-200">
+              <span className="font-bold text-cyan-400 block">Výpočet na workeru stále běží</span>
+              Vyšetření {pendingScanId} je zařazené. Až doběhne, dotáhněte výsledek.
+            </div>
+            <button
+              onClick={handleRefreshPending}
+              disabled={isProcessing}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-composite-950 font-display uppercase tracking-wider font-bold text-xs transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? 'animate-spin' : ''}`} />
+              Dotáhnout výsledek
+            </button>
+          </div>
+        )}
+
         <PatientSelect
           patients={patients}
           selectedPatientId={selectedPatientId}
@@ -240,12 +337,7 @@ export default function App() {
               </div>
 
               <div className="lg:col-span-4">
-                {selectedScan && (
-                  <QuantificationCard
-                    scan={selectedScan}
-                    latestAnalysis={latestAnalysis}
-                  />
-                )}
+                {selectedScan && <QuantificationCard scan={selectedScan} />}
               </div>
 
               <div className="lg:col-span-4">
@@ -283,12 +375,7 @@ export default function App() {
                 onToggleExpansive={() => setIsExpansive3D(true)}
               />
 
-              {selectedScan && (
-                <QuantificationCard
-                  scan={selectedScan}
-                  latestAnalysis={latestAnalysis}
-                />
-              )}
+              {selectedScan && <QuantificationCard scan={selectedScan} />}
             </div>
           </div>
         )}
@@ -303,7 +390,10 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-composite-800 px-4 sm:px-8 py-4 text-center text-xs text-paper-400/60 font-mono">
-        <p>ACL Web Platform • Systém pro analýzu a 3D vizualizaci rekonstrukce předního zkříženého vazu</p>
+        <p>
+          ACL Web Platform • Naměřené parametry, žádné odhady. Souhrnné skóre se nepočítá, dokud
+          neexistuje model natrénovaný na datech.
+        </p>
       </footer>
     </div>
   );

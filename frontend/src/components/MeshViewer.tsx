@@ -207,8 +207,24 @@ export default function MeshViewer({
               <h2 className="text-lg font-bold text-paper-100 font-display uppercase tracking-wider">
                 3D Rekonstrukce Kolene
               </h2>
-              <span className="text-[11px] px-2 py-0.5 rounded badge-kraft">
-                {scan.integrity_score.toFixed(1)}% INTEGRITA
+              {scan.is_demo && (
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded badge-hazard"
+                  title="Tato data nejsou skutečná měření"
+                >
+                  UKÁZKOVÁ DATA
+                </span>
+              )}
+              <span
+                className={`text-[11px] px-2 py-0.5 rounded ${
+                  scan.status === 'ready' ? 'badge-cyan' : 'badge-hazard'
+                }`}
+              >
+                {scan.status === 'ready'
+                  ? 'ZMĚŘENO'
+                  : scan.status === 'pending'
+                  ? 'VÝPOČET BĚŽÍ'
+                  : 'VÝPOČET SELHAL'}
               </span>
             </div>
             <p className="text-xs text-paper-300 font-mono mt-0.5">

@@ -221,8 +221,8 @@ export default function DatabaseExplorerModal({
                     <th className="py-2.5 px-3">Pacient</th>
                     <th className="py-2.5 px-3">Datum skenu</th>
                     <th className="py-2.5 px-3">Měsíců post-op</th>
-                    <th className="py-2.5 px-3">Objem vazu</th>
-                    <th className="py-2.5 px-3">Integrita</th>
+                    <th className="py-2.5 px-3">Objem štěpu</th>
+                    <th className="py-2.5 px-3">Stav</th>
                     <th className="py-2.5 px-3">3D Model</th>
                   </tr>
                 </thead>
@@ -251,19 +251,28 @@ export default function DatabaseExplorerModal({
                         </td>
                         <td className="py-2.5 px-3 text-paper-200 font-mono">{s.scan_date}</td>
                         <td className="py-2.5 px-3 font-mono text-paper-100">{s.months_post_op} mo</td>
-                        <td className="py-2.5 px-3 font-mono text-cyan-400 font-semibold">{s.volume_mm3} mm³</td>
-                        <td className="py-2.5 px-3">
+                        <td className="py-2.5 px-3 font-mono text-cyan-400 font-semibold">
+                          {s.metrics.acl_volume_mm3 === null
+                            ? '—'
+                            : `${s.metrics.acl_volume_mm3.toFixed(0)} mm³`}
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
                           <span
                             className={`px-2 py-0.5 rounded font-mono font-bold text-[11px] ${
-                              s.integrity_score >= 80
+                              s.status === 'ready'
                                 ? 'bg-composite-950 border border-emerald-500/40 text-emerald-300'
-                                : s.integrity_score >= 65
+                                : s.status === 'pending'
                                 ? 'bg-composite-950 border border-amber-500/40 text-amber-300'
                                 : 'bg-composite-950 border border-rose-500/40 text-rose-300'
                             }`}
                           >
-                            {s.integrity_score}%
+                            {s.status === 'ready' ? 'HOTOVO' : s.status === 'pending' ? 'BĚŽÍ' : 'SELHALO'}
                           </span>
+                          {s.is_demo && (
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-composite-950 border border-hazard-500/40 text-hazard-400">
+                              UKÁZKA
+                            </span>
+                          )}
                         </td>
                         <td
                           className="py-2.5 px-3 font-mono text-paper-400/60 text-[11px] truncate max-w-[150px]"
